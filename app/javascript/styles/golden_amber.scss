@@ -1,0 +1,101 @@
+// Golden Amber builds on Mastodon's default theme and only replaces color
+// tokens. This keeps layout and component styling aligned with upstream.
+@use 'application';
+
+html {
+  // Warm neutral palette
+  --color-grey-50: #fffaf0;
+  --color-grey-100: #f5edda;
+  --color-grey-200: #ddd0b3;
+  --color-grey-300: #c2b28f;
+  --color-grey-400: #9c8a64;
+  --color-grey-500: #786947;
+  --color-grey-600: #5d5038;
+  --color-grey-700: #463b29;
+  --color-grey-800: #332b1e;
+  --color-grey-900: #241e15;
+  --color-grey-950: #17130d;
+
+  // Golden amber brand palette. Mastodon 4.6 maps its brand tokens to the
+  // indigo scale, so retaining those token names preserves upstream behavior.
+  --color-indigo-50: #fff8e1;
+  --color-indigo-100: #ffedb3;
+  --color-indigo-200: #ffdb73;
+  --color-indigo-300: #ffc53d;
+  --color-indigo-400: #e9a91b;
+  --color-indigo-500: #c88a00;
+  --color-indigo-600: #a06400;
+  --color-indigo-700: #875600;
+  --color-indigo-800: #684100;
+  --color-indigo-900: #4c2f00;
+  --color-indigo-950: #2b1a00;
+}
+
+[data-color-scheme='dark'],
+html:not([data-color-scheme]) {
+  // Give adjacent surfaces and structural borders a little more separation
+  // than the default one-step neutral mapping without making the UI outlined.
+  --color-bg-secondary: color-mix(
+    in oklab,
+    var(--color-grey-900) 72%,
+    var(--color-grey-800)
+  );
+  --color-border-primary: color-mix(
+    in oklab,
+    var(--color-grey-800) 72%,
+    var(--color-grey-700)
+  );
+  --golden-amber-divider-subtle: var(--color-grey-800);
+  --rich-text-container-color: #3b2c0f;
+  --rich-text-text-color: #ffdc73;
+  --rich-text-decorations-color: #c88a00;
+
+  &[data-contrast='high'],
+  [data-contrast='high'] & {
+    // Keep outer boundaries strong while letting repeated list rows recede.
+    --golden-amber-divider-subtle: color-mix(
+      in oklab,
+      var(--color-grey-800) 78%,
+      var(--color-grey-700)
+    );
+  }
+}
+
+[data-color-scheme='light'] {
+  // The default light theme uses pure white for its primary surface. Use
+  // separate warm-neutral steps so Golden Amber remains visibly warm.
+  --color-bg-primary: var(--color-grey-50);
+  --color-bg-secondary: var(--color-grey-100);
+  --color-bg-tertiary: var(--color-grey-200);
+  --golden-amber-divider-subtle: var(--color-grey-200);
+  --rich-text-container-color: #fff0c2;
+  --rich-text-text-color: #5a3d00;
+  --rich-text-decorations-color: #c88a00;
+
+  &[data-contrast='high'],
+  [data-contrast='high'] & {
+    --golden-amber-divider-subtle: color-mix(
+      in oklab,
+      var(--color-grey-200) 78%,
+      var(--color-grey-300)
+    );
+  }
+}
+
+// The default custom scrollbar uses the secondary text color as its thumb.
+// That is unnecessarily dominant on Golden Amber's light ivory surfaces.
+html.custom-scrollbars[data-color-scheme='light'] {
+  scrollbar-color: var(--color-grey-400) var(--color-bg-secondary);
+}
+
+// In high-contrast mode, reserve the stronger primary border for containers
+// and controls while repeated feed rows use a quieter divider.
+[data-contrast='high'] {
+  .status,
+  .notification-group,
+  .notification-ungrouped,
+  .account:where(:not(.account--without-border)),
+  .conversation {
+    border-bottom-color: var(--golden-amber-divider-subtle);
+  }
+}

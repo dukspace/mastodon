@@ -1,1 +1,2 @@
 default: styles/application.scss
+golden_amber: styles/golden_amber.scss
