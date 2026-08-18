@@ -2195,6 +2195,7 @@ en:
   themes:
     default: Mastodon
     golden_amber: Golden Amber
+    verdant_canopy: Verdant Canopy
   time:
     formats:
       default: "%b %d, %Y, %H:%M"

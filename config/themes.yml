@@ -1,2 +1,3 @@
 default: styles/application.scss
 golden_amber: styles/golden_amber.scss
+verdant_canopy: styles/verdant_canopy.scss

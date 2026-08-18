@@ -2119,6 +2119,7 @@ ko:
   themes:
     default: Mastodon
     golden_amber: 골든 앰버
+    verdant_canopy: 녹음의 숲
   time:
     formats:
       default: "%Y-%m-%d %H:%M"

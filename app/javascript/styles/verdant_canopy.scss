@@ -1,0 +1,100 @@
+// Verdant Canopy builds on Mastodon's default theme and only replaces color
+// tokens. This keeps layout and component styling aligned with upstream.
+@use 'application';
+
+html {
+  // Forest neutral palette: mist, bark, shaded leaves, and near-black soil.
+  --color-grey-50: #f5f8f2;
+  --color-grey-100: #e8eee3;
+  --color-grey-200: #d1dec9;
+  --color-grey-300: #b1c2a8;
+  --color-grey-400: #8da184;
+  --color-grey-500: #6b8064;
+  --color-grey-600: #52644d;
+  --color-grey-700: #3d4c39;
+  --color-grey-800: #2c382b;
+  --color-grey-900: #1d271f;
+  --color-grey-950: #111813;
+
+  // Sunlit leaf brand palette. Mastodon 4.6 maps its brand tokens to the
+  // indigo scale, so retaining those token names preserves upstream behavior.
+  --color-indigo-50: #effbea;
+  --color-indigo-100: #d8f4ce;
+  --color-indigo-200: #b9e9ab;
+  --color-indigo-300: #91db7d;
+  --color-indigo-400: #68c759;
+  --color-indigo-500: #49a83c;
+  --color-indigo-600: #37832f;
+  --color-indigo-700: #2c6828;
+  --color-indigo-800: #275324;
+  --color-indigo-900: #21451f;
+  --color-indigo-950: #0f2611;
+}
+
+[data-color-scheme='dark'],
+html:not([data-color-scheme]) {
+  // Keep the dark scheme layered like a forest floor: subtle at rest, but
+  // distinct enough that the timeline and surrounding chrome do not merge.
+  --color-bg-secondary: color-mix(
+    in oklab,
+    var(--color-grey-900) 72%,
+    var(--color-grey-800)
+  );
+  --color-border-primary: color-mix(
+    in oklab,
+    var(--color-grey-800) 72%,
+    var(--color-grey-700)
+  );
+  --verdant-canopy-divider-subtle: var(--color-grey-800);
+  --rich-text-container-color: #20351f;
+  --rich-text-text-color: #c8efb8;
+  --rich-text-decorations-color: #568c49;
+
+  &[data-contrast='high'],
+  [data-contrast='high'] & {
+    --verdant-canopy-divider-subtle: color-mix(
+      in oklab,
+      var(--color-grey-800) 78%,
+      var(--color-grey-700)
+    );
+  }
+}
+
+[data-color-scheme='light'] {
+  // Pale sage surfaces avoid a clinical white while retaining clear text and
+  // control contrast in the light scheme.
+  --color-bg-primary: var(--color-grey-50);
+  --color-bg-secondary: var(--color-grey-100);
+  --color-bg-tertiary: var(--color-grey-200);
+  --verdant-canopy-divider-subtle: var(--color-grey-200);
+  --rich-text-container-color: #e1f1d8;
+  --rich-text-text-color: #234d20;
+  --rich-text-decorations-color: #82b873;
+
+  &[data-contrast='high'],
+  [data-contrast='high'] & {
+    --verdant-canopy-divider-subtle: color-mix(
+      in oklab,
+      var(--color-grey-200) 78%,
+      var(--color-grey-300)
+    );
+  }
+}
+
+// Keep the scrollbar present but quieter than the surrounding content on pale
+// sage surfaces.
+html.custom-scrollbars[data-color-scheme='light'] {
+  scrollbar-color: var(--color-grey-400) var(--color-bg-secondary);
+}
+
+// In high-contrast mode, reserve the stronger primary border for containers
+// and controls while repeated feed rows use a quieter divider.
+[data-contrast='high'] {
+  .status,
+  .notification-group,
+  .notification-ungrouped,
+  .account:where(:not(.account--without-border)),
+  .conversation {
+    border-bottom-color: var(--verdant-canopy-divider-subtle);
+  }
+}
