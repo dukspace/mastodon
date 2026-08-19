@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -849,6 +849,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
     t.boolean "filtered", default: false, null: false
     t.bigint "from_account_id", null: false
     t.string "group_key"
+    t.bigint "status_reaction_id"
     t.string "type"
     t.datetime "updated_at", precision: nil, null: false
     t.index ["account_id", "group_key"], name: "index_notifications_on_account_id_and_group_key", where: "(group_key IS NOT NULL)"
@@ -856,6 +857,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
     t.index ["account_id", "id", "type"], name: "index_notifications_on_filtered", order: { id: :desc }, where: "(filtered = false)"
     t.index ["activity_id", "activity_type"], name: "index_notifications_on_activity_id_and_activity_type"
     t.index ["from_account_id"], name: "index_notifications_on_from_account_id"
+    t.index ["status_reaction_id"], name: "index_notifications_on_status_reaction_id"
   end
 
   create_table "oauth_access_grants", force: :cascade do |t|
@@ -1028,6 +1030,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
     t.index ["status_id"], name: "index_quotes_on_status_id", unique: true
   end
 
+  create_table "reaction_domain_capabilities", primary_key: "domain", id: :string, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "last_observed_at", null: false
+    t.boolean "supports_emoji_react", default: false, null: false
+    t.boolean "supports_like_reactions", default: false, null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "relationship_severance_events", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "purged", default: false, null: false
@@ -1186,6 +1196,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
     t.datetime "updated_at", precision: nil, null: false
     t.index ["account_id", "status_id"], name: "index_status_pins_on_account_id_and_status_id", unique: true
     t.index ["status_id"], name: "index_status_pins_on_status_id"
+  end
+
+  create_table "status_reactions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "activity_type", default: 0, null: false
+    t.string "activity_uri"
+    t.datetime "created_at", null: false
+    t.bigint "custom_emoji_id"
+    t.bigint "favourite_id"
+    t.string "name", null: false
+    t.bigint "status_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["activity_uri"], name: "index_status_reactions_on_activity_uri", unique: true, where: "(activity_uri IS NOT NULL)"
+    t.index ["custom_emoji_id"], name: "index_status_reactions_on_custom_emoji_id"
+    t.index ["favourite_id"], name: "index_status_reactions_on_favourite_id"
+    t.index ["status_id", "account_id"], name: "index_status_reactions_on_status_id_and_account_id", unique: true
+    t.index ["status_id", "custom_emoji_id", "name"], name: "index_status_reactions_for_aggregation"
   end
 
   create_table "status_stats", force: :cascade do |t|
@@ -1548,6 +1575,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
   add_foreign_key "notification_requests", "statuses", column: "last_status_id", on_delete: :nullify
   add_foreign_key "notifications", "accounts", column: "from_account_id", name: "fk_fbd6b0bf9e", on_delete: :cascade
   add_foreign_key "notifications", "accounts", name: "fk_c141c8ee55", on_delete: :cascade
+  add_foreign_key "notifications", "status_reactions", on_delete: :cascade
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id", name: "fk_34d54b0a33", on_delete: :cascade
   add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id", name: "fk_63b044929b", on_delete: :cascade
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id", name: "fk_f5fc4c1ee3", on_delete: :cascade
@@ -1582,6 +1610,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
   add_foreign_key "status_edits", "statuses", on_delete: :cascade
   add_foreign_key "status_pins", "accounts", name: "fk_d4cb435b62", on_delete: :cascade
   add_foreign_key "status_pins", "statuses", on_delete: :cascade
+  add_foreign_key "status_reactions", "accounts", on_delete: :cascade
+  add_foreign_key "status_reactions", "custom_emojis", on_delete: :nullify
+  add_foreign_key "status_reactions", "favourites", on_delete: :cascade
+  add_foreign_key "status_reactions", "statuses", on_delete: :cascade
   add_foreign_key "status_stats", "statuses", on_delete: :cascade
   add_foreign_key "status_trends", "accounts", on_delete: :cascade
   add_foreign_key "status_trends", "statuses", on_delete: :cascade
@@ -1625,9 +1657,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
   add_index "account_summaries", ["account_id"], name: "index_account_summaries_on_account_id", unique: true
 
   create_view "global_follow_recommendations", materialized: true, sql_definition: <<-SQL
-      SELECT account_id,
-      sum(rank) AS rank,
-      array_agg(reason) AS reason
+      SELECT t0.account_id,
+      sum(t0.rank) AS rank,
+      array_agg(t0.reason) AS reason
      FROM ( SELECT account_summaries.account_id,
               ((count(follows.id))::numeric / (1.0 + (count(follows.id))::numeric)) AS rank,
               'most_followed'::text AS reason
@@ -1651,8 +1683,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
                     WHERE (follow_recommendation_suppressions.account_id = statuses.account_id)))))
             GROUP BY account_summaries.account_id
            HAVING (sum((status_stats.reblogs_count + status_stats.favourites_count)) >= (5)::numeric)) t0
-    GROUP BY account_id
-    ORDER BY (sum(rank)) DESC;
+    GROUP BY t0.account_id
+    ORDER BY (sum(t0.rank)) DESC;
   SQL
   add_index "global_follow_recommendations", ["account_id"], name: "index_global_follow_recommendations_on_account_id", unique: true
 
@@ -1682,9 +1714,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
   add_index "instances", ["domain"], name: "index_instances_on_domain", unique: true
 
   create_view "user_ips", sql_definition: <<-SQL
-      SELECT user_id,
-      ip,
-      max(used_at) AS used_at
+      SELECT t0.user_id,
+      t0.ip,
+      max(t0.used_at) AS used_at
      FROM ( SELECT users.id AS user_id,
               users.sign_up_ip AS ip,
               users.created_at AS used_at
@@ -1701,6 +1733,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_150940) do
               login_activities.created_at
              FROM login_activities
             WHERE (login_activities.success = true)) t0
-    GROUP BY user_id, ip;
+    GROUP BY t0.user_id, t0.ip;
   SQL
 end

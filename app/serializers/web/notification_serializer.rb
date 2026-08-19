@@ -29,7 +29,9 @@ class Web::NotificationSerializer < ActiveModel::Serializer
   end
 
   def title
-    I18n.t("notification_mailer.#{object.type}.subject", name: object.from_account.display_name.presence || object.from_account.username)
+    type = object.type == :emoji_reaction ? :favourite : object.type
+    title = I18n.t("notification_mailer.#{type}.subject", name: object.from_account.display_name.presence || object.from_account.username)
+    object.reaction.present? ? "#{title} #{object.reaction.display_name}" : title
   end
 
   def body

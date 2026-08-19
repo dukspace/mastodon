@@ -28,6 +28,7 @@ class REST::StatusSerializer < ActiveModel::Serializer
   has_many :ordered_mentions, key: :mentions
   has_many :tags
   has_many :emojis, serializer: REST::CustomEmojiSerializer
+  has_many :reactions, serializer: REST::StatusReactionSerializer
   has_many :tagged_collections, serializer: REST::CollectionSerializer
 
   # Due to a ActiveModel::Serializer quirk, if you change any of the following, have a look at
@@ -177,6 +178,10 @@ class REST::StatusSerializer < ActiveModel::Serializer
       manual: object.proper.quote_policy_as_keys(:manual),
       current_user: object.proper.quote_policy_for_account(current_user&.account),
     }
+  end
+
+  def reactions
+    relationships&.reactions_map&.fetch(object.id, nil) || object.reactions(current_user&.account)
   end
 
   private

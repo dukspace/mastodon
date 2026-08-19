@@ -20,6 +20,19 @@ RSpec.describe REST::StatusSerializer do
   let(:status) { Fabricate(:status, account: alice) }
 
   context 'with a local status' do
+    context 'with reactions' do
+      before do
+        StatusReaction.create!(status: status, account: current_user.account, name: '👍')
+        StatusReaction.create!(status: status, account: bob, name: '👍')
+      end
+
+      it 'includes stable aggregate counts and the current user selection' do
+        expect(subject['reactions']).to contain_exactly(
+          a_hash_including('name' => '👍', 'count' => 2, 'me' => true)
+        )
+      end
+    end
+
     context 'with a quote and a CW but no contents' do
       let(:quoted_status) { Fabricate(:status, account: alice) }
       let(:status) { Fabricate.build(:status, account: alice, text: '', spoiler_text: 'this is a CW') }

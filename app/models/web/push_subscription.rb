@@ -47,7 +47,8 @@ class Web::PushSubscription < ApplicationRecord
   private
 
   def alert_enabled_for_notification_type?(notification)
-    truthy?(data&.dig('alerts', notification.type.to_s))
+    type = notification.type == :emoji_reaction ? :favourite : notification.type
+    truthy?(data&.dig('alerts', type.to_s))
   end
 
   def policy_allows_notification?(notification)

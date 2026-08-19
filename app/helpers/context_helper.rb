@@ -39,6 +39,12 @@ module ContextHelper
       '_misskey_quote' => 'https://misskey-hub.net/ns#_misskey_quote',
       'quoteAuthorization' => { '@id' => 'https://w3id.org/fep/044f#quoteAuthorization', '@type' => '@id' },
     },
+    misskey_reactions: {
+      '_misskey_reaction' => 'https://misskey-hub.net/ns#_misskey_reaction',
+    },
+    emoji_reactions: {
+      'EmojiReact' => 'http://litepub.social/ns#EmojiReact',
+    },
     interaction_policies: {
       'gts' => 'https://gotosocial.org/ns#',
       'interactionPolicy' => { '@id' => 'gts:interactionPolicy', '@type' => '@id' },

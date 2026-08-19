@@ -33,6 +33,8 @@ class FavouriteService < BaseService
     if status.account.local?
       LocalNotificationWorker.perform_async(status.account_id, favourite.id, 'Favourite', 'favourite')
     elsif status.account.activitypub?
+      return if StatusReaction.exists?(account: favourite.account, status: status, activity_type: :like)
+
       ActivityPub::DeliveryWorker.perform_async(build_json(favourite), favourite.account_id, status.account.inbox_url)
     end
   end

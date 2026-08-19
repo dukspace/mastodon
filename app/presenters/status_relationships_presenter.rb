@@ -4,7 +4,7 @@ class StatusRelationshipsPresenter
   PINNABLE_VISIBILITIES = %w(public unlisted private).freeze
 
   attr_reader :reblogs_map, :favourites_map, :mutes_map, :pins_map,
-              :bookmarks_map, :filters_map, :attributes_map
+              :bookmarks_map, :filters_map, :attributes_map, :reactions_map
 
   def initialize(statuses, current_account_id = nil, **options)
     @current_account_id = current_account_id
@@ -12,6 +12,10 @@ class StatusRelationshipsPresenter
     # Keeping a reference to @statuses is ok since `StatusRelationshipsPresenter`
     # basically never outlives the statuses collection it is passed
     @statuses = statuses
+    statuses = statuses.compact
+    reaction_status_ids = statuses.flat_map { |s| [s.id, s.reblog_of_id, s.proper.quote&.quoted_status_id] }.uniq.compact
+    reaction_account = Account.find_by(id: current_account_id) if current_account_id
+    @reactions_map = StatusReaction.summaries_for(reaction_status_ids, reaction_account)
 
     if current_account_id.nil?
       @preloaded_account_relations = {}
@@ -25,7 +29,6 @@ class StatusRelationshipsPresenter
     else
       @preloaded_account_relations = nil
 
-      statuses            = statuses.compact
       status_ids          = statuses.flat_map { |s| [s.id, s.reblog_of_id, s.proper.quote&.quoted_status_id] }.uniq.compact
       conversation_ids    = statuses.flat_map { |s| [s.proper.conversation_id, s.proper.quote&.quoted_status&.conversation_id] }.uniq.compact
       pinnable_status_ids = statuses.flat_map { |s| [s.proper, s.proper.quote&.quoted_status] }.compact.filter_map { |s| s.id if s.account_id == current_account_id && PINNABLE_VISIBILITIES.include?(s.visibility) }

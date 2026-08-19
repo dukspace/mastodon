@@ -4,16 +4,17 @@
 #
 # Table name: notifications
 #
-#  id              :bigint(8)        not null, primary key
-#  activity_type   :string           not null
-#  filtered        :boolean          default(FALSE), not null
-#  group_key       :string
-#  type            :string
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  account_id      :bigint(8)        not null
-#  activity_id     :bigint(8)        not null
-#  from_account_id :bigint(8)        not null
+#  id                 :bigint(8)        not null, primary key
+#  activity_type      :string           not null
+#  filtered           :boolean          default(FALSE), not null
+#  group_key          :string
+#  type               :string
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  account_id         :bigint(8)        not null
+#  activity_id        :bigint(8)        not null
+#  from_account_id    :bigint(8)        not null
+#  status_reaction_id :bigint(8)
 #
 
 class Notification < ApplicationRecord
@@ -56,6 +57,10 @@ class Notification < ApplicationRecord
       baseline: true,
     }.freeze,
     favourite: {
+      filterable: true,
+      baseline: true,
+    }.freeze,
+    emoji_reaction: {
       filterable: true,
       baseline: true,
     }.freeze,
@@ -112,7 +117,8 @@ class Notification < ApplicationRecord
     reblog: [status: :reblog],
     mention: [mention: :status],
     quote: [quote: :status],
-    favourite: [favourite: :status],
+    favourite: [favourite: [:status, { status_reaction: :custom_emoji }]],
+    emoji_reaction: [status_reaction: [:status, :custom_emoji]],
     poll: [poll: :status],
     update: :status,
     quoted_update: :status,
@@ -122,6 +128,7 @@ class Notification < ApplicationRecord
   belongs_to :account, optional: true
   belongs_to :from_account, class_name: 'Account', optional: true
   belongs_to :activity, polymorphic: true, optional: true
+  belongs_to :status_reaction, optional: true
 
   with_options foreign_key: 'activity_id', optional: true do
     belongs_to :mention, inverse_of: :notification
@@ -155,6 +162,8 @@ class Notification < ApplicationRecord
       status&.reblog
     when :favourite
       favourite&.status
+    when :emoji_reaction
+      status_reaction&.status
     when :mention
       mention&.status
     when :quote
@@ -162,6 +171,10 @@ class Notification < ApplicationRecord
     when :poll
       poll&.status
     end
+  end
+
+  def reaction
+    status_reaction || favourite&.status_reaction
   end
 
   def target_collection
@@ -216,6 +229,8 @@ class Notification < ApplicationRecord
           notification.status.reblog = cached_status
         when :favourite
           notification.favourite.status = cached_status
+        when :emoji_reaction
+          notification.status_reaction.status = cached_status
         when :mention
           notification.mention.status = cached_status
         when :poll

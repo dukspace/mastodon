@@ -4,7 +4,7 @@ module Notification::Groups
   extend ActiveSupport::Concern
 
   # `set_group_key!` needs to be updated if this list changes
-  GROUPABLE_NOTIFICATION_TYPES = %i(favourite reblog follow admin.sign_up).freeze
+  GROUPABLE_NOTIFICATION_TYPES = %i(favourite emoji_reaction reblog follow admin.sign_up).freeze
   MAXIMUM_GROUP_SPAN_HOURS = 12
 
   included do
@@ -15,15 +15,17 @@ module Notification::Groups
     return if filtered? || GROUPABLE_NOTIFICATION_TYPES.exclude?(type)
 
     type_prefix = case type
-                  when :favourite, :reblog
-                    [type, target_status&.id].join('-')
+                  when :favourite, :emoji_reaction, :reblog
+                    parts = [type, target_status&.id]
+                    parts << Digest::SHA256.hexdigest("#{reaction.custom_emoji_id}:#{reaction.name}").first(16) if reaction.present?
+                    parts.join('-')
                   when :follow, :'admin.sign_up'
                     type
                   else
                     raise NotImplementedError
                   end
     redis_key   = "notif-group/#{account.id}/#{type_prefix}"
-    hour_bucket = activity.created_at.utc.to_i / 1.hour.to_i
+    hour_bucket = (reaction || activity).created_at.utc.to_i / 1.hour.to_i
 
     # Reuse previous group if it does not span too large an amount of time
     previous_bucket = redis.get(redis_key).to_i
