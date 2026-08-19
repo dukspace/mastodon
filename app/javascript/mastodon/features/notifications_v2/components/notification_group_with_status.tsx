@@ -46,6 +46,7 @@ export const NotificationGroupWithStatus: React.FC<{
   type: string;
   unread: boolean;
   additionalContent?: JSX.Element;
+  additionalContentClassName?: string;
 }> = ({
   icon,
   iconId,
@@ -59,6 +60,7 @@ export const NotificationGroupWithStatus: React.FC<{
   type,
   unread,
   additionalContent,
+  additionalContentClassName,
 }) => {
   const dispatch = useAppDispatch();
   const account = useAppSelector((state) =>
@@ -138,15 +140,20 @@ export const NotificationGroupWithStatus: React.FC<{
             </h2>
           </div>
 
-          {statusId && (
-            <div className='notification-group__main__status'>
-              <EmbeddedStatus statusId={statusId} />
+          {additionalContent && (
+            <div
+              className={classNames(
+                'notification-group__main__additional-content',
+                additionalContentClassName,
+              )}
+            >
+              {additionalContent}
             </div>
           )}
 
-          {additionalContent && (
-            <div className='notification-group__main__additional-content'>
-              {additionalContent}
+          {statusId && (
+            <div className='notification-group__main__status'>
+              <EmbeddedStatus statusId={statusId} />
             </div>
           )}
         </div>

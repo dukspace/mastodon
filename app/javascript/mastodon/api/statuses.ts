@@ -1,4 +1,8 @@
-import api, { apiRequestPut, getAsyncRefreshHeader } from 'mastodon/api';
+import api, {
+  apiRequestDelete,
+  apiRequestPut,
+  getAsyncRefreshHeader,
+} from 'mastodon/api';
 import type {
   ApiContextJSON,
   ApiStatusJSON,
@@ -29,3 +33,23 @@ export const apiSetQuotePolicy = async (
     },
   );
 };
+
+export const apiPutStatusReaction = async (
+  statusId: string,
+  name: string,
+  domain?: string,
+) =>
+  apiRequestPut<ApiStatusJSON>(
+    `v1/statuses/${statusId}/reactions/${encodeURIComponent(name)}`,
+    domain ? { domain } : undefined,
+  );
+
+export const apiDeleteStatusReaction = async (
+  statusId: string,
+  name: string,
+  domain?: string,
+) =>
+  apiRequestDelete<ApiStatusJSON>(
+    `v1/statuses/${statusId}/reactions/${encodeURIComponent(name)}`,
+    domain ? { domain } : undefined,
+  );

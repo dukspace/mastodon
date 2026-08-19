@@ -25,6 +25,7 @@ import { me, quickBoosting } from '../../initial_state';
 import { IconButton } from '../icon_button';
 import { injectIntl } from '../intl';
 import { BoostButton } from '../status/boost_button';
+import { StatusReactionButton } from '../status_reactions';
 import { RemoveQuoteHint } from './remove_quote_hint';
 import { quoteItemState, selectStatusState } from '../status/boost_button_utils';
 
@@ -398,6 +399,11 @@ class StatusActionBar extends ImmutablePureComponent {
         <div className='status__action-bar__button-wrapper'>
           <IconButton className='status__action-bar__button star-icon' animate active={status.get('favourited')} title={favouriteTitle} icon='star' iconComponent={status.get('favourited') ? StarIcon : StarBorderIcon} onClick={this.handleFavouriteClick} counter={withCounters ? status.get('favourites_count') : undefined} />
         </div>
+        {signedIn && (
+          <div className='status__action-bar__button-wrapper'>
+            <StatusReactionButton status={status} />
+          </div>
+        )}
         <div className='status__action-bar__button-wrapper'>
           <IconButton className='status__action-bar__button bookmark-icon' disabled={!signedIn} active={status.get('bookmarked')} title={bookmarkTitle} icon='bookmark' iconComponent={status.get('bookmarked') ? BookmarkIcon : BookmarkBorderIcon} onClick={this.handleBookmarkClick} />
         </div>

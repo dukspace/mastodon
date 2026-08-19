@@ -86,6 +86,7 @@ export const statusFactory: FactoryFunction<ApiStatusJSON> = ({
   mentions: [],
   tags: [],
   emojis: [],
+  reactions: [],
   contentHtml: data.text ?? '<p>This is a test status.</p>',
   ...data,
 });

@@ -18,6 +18,7 @@ import { identityContextPropShape, withIdentity } from 'mastodon/identity_contex
 import { PERMISSION_MANAGE_USERS, PERMISSION_MANAGE_FEDERATION } from 'mastodon/permissions';
 
 import { IconButton } from '../../../components/icon_button';
+import { StatusReactionButton } from '../../../components/status_reactions';
 import { Dropdown } from 'mastodon/components/dropdown_menu';
 import { me, quickBoosting } from '../../../initial_state';
 import { BoostButton } from '@/mastodon/components/status/boost_button';
@@ -333,6 +334,7 @@ class ActionBar extends PureComponent {
           <BoostButton status={status} />
         </div>
         <div className='detailed-status__button'><IconButton className='star-icon' animate active={status.get('favourited')} title={favouriteTitle} icon='star' iconComponent={status.get('favourited') ? StarIcon : StarBorderIcon} onClick={this.handleFavouriteClick} /></div>
+        {signedIn && <div className='detailed-status__button'><StatusReactionButton status={status} /></div>}
         <div className='detailed-status__button'><IconButton className='bookmark-icon' disabled={!signedIn} active={status.get('bookmarked')} title={bookmarkTitle} icon='bookmark' iconComponent={status.get('bookmarked') ? BookmarkIcon : BookmarkBorderIcon} onClick={this.handleBookmarkClick} /></div>
 
         <div className='detailed-status__action-bar-dropdown'>

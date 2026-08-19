@@ -5,13 +5,14 @@ import type { AccountWarningAction } from 'mastodon/models/notification_group';
 import type { ApiAccountJSON } from './accounts';
 import type { ApiCollectionJSON } from './collections';
 import type { ApiReportJSON } from './reports';
-import type { ApiStatusJSON } from './statuses';
+import type { ApiStatusJSON, ApiStatusReactionJSON } from './statuses';
 
 // See app/model/notification.rb
 export const allNotificationTypes: NotificationType[] = [
   'follow',
   'follow_request',
   'favourite',
+  'emoji_reaction',
   'reblog',
   'mention',
   'quote',
@@ -29,6 +30,7 @@ export const allNotificationTypes: NotificationType[] = [
 
 export type NotificationWithStatusType =
   | 'favourite'
+  | 'emoji_reaction'
   | 'reblog'
   | 'status'
   | 'mention'
@@ -71,11 +73,13 @@ export interface BaseNotificationGroupJSON {
 interface NotificationGroupWithStatusJSON extends BaseNotificationGroupJSON {
   type: NotificationWithStatusType;
   status_id: string | null;
+  reaction?: ApiStatusReactionJSON;
 }
 
 interface NotificationWithStatusJSON extends BaseNotificationJSON {
   type: NotificationWithStatusType;
   status: ApiStatusJSON | null;
+  reaction?: ApiStatusReactionJSON;
 }
 
 interface ReportNotificationGroupJSON extends BaseNotificationGroupJSON {

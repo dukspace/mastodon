@@ -26,7 +26,9 @@ defineMessages({
 
 export function updateNotifications(notification, intlMessages, intlLocale) {
   return (dispatch, getState) => {
-    const filterType = notification.type === 'quoted_update' ? 'update' : notification.type;
+    let filterType = notification.type;
+    if (notification.type === 'quoted_update') filterType = 'update';
+    else if (notification.type === 'emoji_reaction') filterType = 'favourite';
 
     const showAlert    = getState().getIn(['settings', 'notifications', 'alerts', filterType], true);
     const playSound    = getState().getIn(['settings', 'notifications', 'sounds', filterType], true);
@@ -55,7 +57,11 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
 
     // Desktop notifications
     if (typeof window.Notification !== 'undefined' && showAlert && !filtered) {
-      const title = new IntlMessageFormat(intlMessages[`notification.${notification.type}`], intlLocale).format({ name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username });
+      const messageType = notification.type === 'emoji_reaction' ? 'favourite' : notification.type;
+      let title = new IntlMessageFormat(intlMessages[`notification.${messageType}`], intlLocale).format({ name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username });
+      if (notification.reaction) {
+        title = `${title} ${notification.reaction.url ? `:${notification.reaction.name}:` : notification.reaction.name}`;
+      }
       const body  = (notification.status && notification.status.spoiler_text.length > 0) ? notification.status.spoiler_text : unescapeHTML(notification.status ? notification.status.content : '');
 
       const notify = new Notification(title, { body, icon: notification.account.avatar, tag: notification.id });

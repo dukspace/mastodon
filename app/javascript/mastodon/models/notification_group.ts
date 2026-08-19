@@ -9,6 +9,7 @@ import type {
   NotificationWithStatusType,
 } from 'mastodon/api_types/notifications';
 import type { ApiReportJSON } from 'mastodon/api_types/reports';
+import type { ApiStatusReactionJSON } from 'mastodon/api_types/statuses';
 
 import type { ApiCollectionJSON } from '../api_types/collections';
 
@@ -29,6 +30,7 @@ interface BaseNotificationWithStatus<
 > extends BaseNotificationGroup {
   type: Type;
   statusId: string | undefined;
+  reaction?: ApiStatusReactionJSON;
 }
 
 interface BaseNotification<
@@ -39,6 +41,8 @@ interface BaseNotification<
 
 export type NotificationGroupFavourite =
   BaseNotificationWithStatus<'favourite'>;
+export type NotificationGroupEmojiReaction =
+  BaseNotificationWithStatus<'emoji_reaction'>;
 export type NotificationGroupReblog = BaseNotificationWithStatus<'reblog'>;
 export type NotificationGroupStatus = BaseNotificationWithStatus<'status'>;
 export type NotificationGroupMention = BaseNotificationWithStatus<'mention'>;
@@ -100,6 +104,7 @@ export interface NotificationGroupCollectionUpdate extends BaseNotification<'col
 
 export type NotificationGroup =
   | NotificationGroupFavourite
+  | NotificationGroupEmojiReaction
   | NotificationGroupReblog
   | NotificationGroupStatus
   | NotificationGroupMention
@@ -154,6 +159,7 @@ export function createNotificationGroupFromJSON(
 
   switch (group.type) {
     case 'favourite':
+    case 'emoji_reaction':
     case 'reblog':
     case 'status':
     case 'mention':
@@ -228,6 +234,7 @@ export function createNotificationGroupFromNotificationJSON(
 
   switch (notification.type) {
     case 'favourite':
+    case 'emoji_reaction':
     case 'reblog':
     case 'status':
     case 'mention':
@@ -239,6 +246,7 @@ export function createNotificationGroupFromNotificationJSON(
         ...group,
         type: notification.type,
         statusId: notification.status?.id,
+        reaction: notification.reaction,
       };
     case 'admin.report':
       return {

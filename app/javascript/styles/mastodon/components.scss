@@ -8716,6 +8716,112 @@ noscript {
   }
 }
 
+.status-reactions {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-top: 10px;
+
+  &__scroll {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    white-space: nowrap;
+    padding: 2px;
+  }
+
+  &__chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 28px;
+    padding: 3px 8px;
+    border: 1px solid var(--color-border-brand-soft);
+    border-radius: 999px;
+    background: var(--color-bg-brand-softest);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--color-bg-brand-soft);
+      color: var(--color-text-primary);
+    }
+
+    &.active {
+      border-color: var(--color-border-brand);
+      color: var(--color-text-brand);
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+  }
+
+  &__emoji {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 18px;
+    max-width: 72px;
+    height: 18px;
+    line-height: 18px;
+
+    img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+
+    .status-reactions__custom-emoji {
+      width: auto;
+      height: auto;
+      max-width: 72px;
+      max-height: 18px;
+    }
+  }
+}
+
+.status-reaction-button {
+  display: inline-flex;
+}
+
+.notification-reaction-emoji {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(96px, 100%);
+  max-height: 20px;
+  object-fit: contain;
+}
+
+.notification-reaction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 28px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 3px 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 999px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  line-height: 20px;
+  vertical-align: middle;
+}
+
 .notification,
 .status__wrapper,
 .conversation {
@@ -10557,6 +10663,10 @@ noscript {
       margin-top: -8px; // to offset the parent's `gap` property
       font-size: 15px;
       line-height: 22px;
+
+      &--reaction {
+        margin-top: 0;
+      }
     }
   }
 

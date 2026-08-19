@@ -34,6 +34,7 @@ import Report from './report';
 
 const messages = defineMessages({
   favourite: { id: 'notification.favourite', defaultMessage: '{name} favorited your post' },
+  emojiReaction: { id: 'notification.emoji_reaction', defaultMessage: '{name} reacted {reaction} to your post' },
   follow: { id: 'notification.follow', defaultMessage: '{name} followed you' },
   ownPoll: { id: 'notification.own_poll', defaultMessage: 'Your poll has ended' },
   poll: { id: 'notification.poll', defaultMessage: 'A poll you voted in has ended' },
@@ -181,6 +182,19 @@ class Notification extends ImmutablePureComponent {
 
   renderFavourite (notification, link) {
     const { intl, unread } = this.props;
+    const reaction = notification.get('reaction');
+    const emoji = reaction && (
+      <span className='notification-reaction'>
+        {reaction.get('url') ? (
+          <img
+            className='notification-reaction-emoji'
+            src={reaction.get('url')}
+            alt={`:${reaction.get('name')}:`}
+            title={`:${reaction.get('name')}:`}
+          />
+        ) : reaction.get('name')}
+      </span>
+    );
 
     return (
       <Hotkeys handlers={this.getHandlers()}>
@@ -190,6 +204,7 @@ class Notification extends ImmutablePureComponent {
 
             <span title={notification.get('created_at')}>
               <FormattedMessage id='notification.favourite' defaultMessage='{name} favorited your post' values={{ name: link }} />
+              {emoji && <> {emoji}</>}
             </span>
           </div>
 
@@ -204,6 +219,37 @@ class Notification extends ImmutablePureComponent {
             cachedMediaWidth={this.props.cachedMediaWidth}
             cacheMediaWidth={this.props.cacheMediaWidth}
           />
+        </div>
+      </Hotkeys>
+    );
+  }
+
+  renderEmojiReaction (notification, link) {
+    const { intl, unread } = this.props;
+    const reaction = notification.get('reaction');
+    const emoji = reaction && (
+      <span className='notification-reaction'>
+        {reaction.get('url') ? (
+          <img
+            className='notification-reaction-emoji'
+            src={reaction.get('url')}
+            alt={`:${reaction.get('name')}:`}
+            title={`:${reaction.get('name')}:`}
+          />
+        ) : reaction.get('name')}
+      </span>
+    );
+
+    return (
+      <Hotkeys handlers={this.getHandlers()}>
+        <div className={classNames('notification notification-favourite focusable', { unread })} tabIndex={0} aria-label={notificationForScreenReader(intl, intl.formatMessage(messages.emojiReaction, { name: notification.getIn(['account', 'acct']), reaction: reaction?.get('name') }), notification.get('created_at'))}>
+          <div className='notification__message'>
+            <Icon id='star' icon={StarIcon} className='star-icon' />
+            <span title={notification.get('created_at')}>
+              <FormattedMessage id='notification.emoji_reaction' defaultMessage='{name} reacted {reaction} to your post' values={{ name: link, reaction: emoji }} />
+            </span>
+          </div>
+          <StatusQuoteManager id={notification.get('status')} account={notification.get('account')} muted withDismiss hidden={!!this.props.hidden} />
         </div>
       </Hotkeys>
     );
@@ -525,6 +571,8 @@ class Notification extends ImmutablePureComponent {
       return this.renderQuote(notification);
     case 'favourite':
       return this.renderFavourite(notification, link);
+    case 'emoji_reaction':
+      return this.renderEmojiReaction(notification, link);
     case 'reblog':
       return this.renderReblog(notification, link);
     case 'status':

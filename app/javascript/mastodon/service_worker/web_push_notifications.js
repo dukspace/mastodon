@@ -86,7 +86,12 @@ export const handlePush = (event) => {
     fetchFromApi(`/api/v1/notifications/${notification_id}`, 'get', access_token).then(notification => {
       const options = {};
 
-      options.title     = formatMessage(`notification.${notification.type}`, preferred_locale, { name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username });
+      const messageType = notification.type === 'emoji_reaction' ? 'favourite' : notification.type;
+      options.title     = formatMessage(`notification.${messageType}`, preferred_locale, { name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username });
+      if (notification.reaction) {
+        const reactionName = notification.reaction.url || /^[\w+-]+$/.test(notification.reaction.name) ? `:${notification.reaction.name}:` : notification.reaction.name;
+        options.title = `${options.title} ${reactionName}`;
+      }
       options.body      = notification.status && htmlToPlainText(notification.status.content);
       options.icon      = notification.account.avatar_static;
       options.timestamp = notification.created_at && new Date(notification.created_at);
