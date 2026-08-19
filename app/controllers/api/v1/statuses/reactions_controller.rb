@@ -7,12 +7,15 @@ class Api::V1::Statuses::ReactionsController < Api::BaseController
   before_action :require_user!
   before_action :set_status
 
+  override_rate_limit_headers :update, family: :reactions
+
   def update
     CreateStatusReactionService.new.call(
       current_account,
       @status,
       name: params[:id],
-      domain: params[:domain]
+      domain: params[:domain],
+      with_rate_limit: true
     )
     render_status
   end

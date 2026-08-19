@@ -145,6 +145,21 @@ RSpec.describe Trends::Statuses do
       decayed_score = status_bar.trend.reload.score
       expect(decayed_score).to be <= original_score / 2
     end
+
+    it 'excludes reaction-backed favourites from the score' do
+      status = Fabricate(:status, text: 'Reacted', language: 'en', trendable: true, created_at: yesterday)
+
+      default_threshold_value.times do
+        account = Fabricate(:account)
+        favourite = Favourite.create!(account: account, status: status)
+        StatusReaction.create!(account: account, status: status, name: '👍', activity_type: :like, favourite: favourite)
+      end
+
+      subject.add(status, status.account_id, today)
+      subject.refresh(today)
+
+      expect(status.reload.trend).to be_nil
+    end
   end
 
   def reblog(status, at_time)

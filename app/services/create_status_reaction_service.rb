@@ -4,7 +4,7 @@ class CreateStatusReactionService < BaseService
   include Authorization
   include Payloadable
 
-  def call(account, status, name:, domain: nil, activity_type: nil, activity_uri: nil, favourite: nil, authorize: true, federate: true, notify: true)
+  def call(account, status, name:, domain: nil, activity_type: nil, activity_uri: nil, favourite: nil, authorize: true, federate: true, notify: true, with_rate_limit: false)
     status = status.reblog if status.reblog?
     authorize_with account, status, :favourite? if authorize
 
@@ -17,7 +17,7 @@ class CreateStatusReactionService < BaseService
     reaction = StatusReaction.transaction do
       status.lock!
       existing = StatusReaction.find_by(account: account, status: status)
-      if activity_uri.present? && existing&.activity_uri == activity_uri
+      if duplicate_reaction?(existing, normalized_name, custom_emoji, activity_uri)
         existing
       else
         linked_favourite = existing&.favourite if existing&.favourite_id.present? && favourite.nil?
@@ -31,7 +31,8 @@ class CreateStatusReactionService < BaseService
           custom_emoji: custom_emoji,
           activity_type: selected_type,
           activity_uri: activity_uri,
-          favourite: favourite
+          favourite: favourite,
+          rate_limit: with_rate_limit
         )
       end
     end
@@ -45,6 +46,13 @@ class CreateStatusReactionService < BaseService
   end
 
   private
+
+  def duplicate_reaction?(existing, name, custom_emoji, activity_uri)
+    return false if existing.nil?
+    return existing.activity_uri == activity_uri if activity_uri.present?
+
+    existing.activity_uri.nil? && existing.name == name && existing.custom_emoji_id == custom_emoji&.id
+  end
 
   def resolve_reaction(value, domain)
     value = value.to_s

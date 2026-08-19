@@ -16,7 +16,10 @@
 #  status_id       :bigint(8)        not null
 #
 class StatusReaction < ApplicationRecord
+  include RateLimitable
   include Redisable
+
+  rate_limit by: :account, family: :reactions
 
   belongs_to :status, inverse_of: :status_reactions
   belongs_to :account, inverse_of: :status_reactions
