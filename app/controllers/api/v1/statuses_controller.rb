@@ -18,7 +18,7 @@ class Api::V1::StatusesController < Api::BaseController
 
   def index
     @statuses = preload_collection(@statuses, Status)
-    render json: @statuses, each_serializer: REST::StatusSerializer
+    render json: @statuses, each_serializer: REST::StatusSerializer, relationships: StatusRelationshipsPresenter.new(@statuses, current_user&.account_id)
   end
 
   def show

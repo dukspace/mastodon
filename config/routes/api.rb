@@ -43,6 +43,7 @@ namespace :api, format: false do
 
         resource :favourite, only: :create
         post :unfavourite, to: 'favourites#destroy'
+        resources :reactions, only: [:update, :destroy]
 
         resource :bookmark, only: :create
         post :unbookmark, to: 'bookmarks#destroy'

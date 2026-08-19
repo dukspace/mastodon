@@ -11,6 +11,7 @@ class REST::NotificationSerializer < ActiveModel::Serializer
   attribute :filtered, if: :filtered?
 
   attribute :fallback, if: :needs_fallback?
+  has_one :reaction, serializer: REST::StatusReactionSerializer, if: :reaction?
 
   belongs_to :from_account, key: :account, serializer: REST::AccountSerializer
   belongs_to :target_status, key: :status, if: :status_type?, serializer: REST::StatusSerializer
@@ -28,7 +29,11 @@ class REST::NotificationSerializer < ActiveModel::Serializer
   end
 
   def status_type?
-    [:favourite, :reblog, :status, :mention, :poll, :update, :quoted_update, :quote].include?(object.type)
+    [:favourite, :emoji_reaction, :reblog, :status, :mention, :poll, :update, :quoted_update, :quote].include?(object.type)
+  end
+
+  def reaction?
+    object.reaction.present?
   end
 
   def collection_type?

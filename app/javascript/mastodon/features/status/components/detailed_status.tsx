@@ -27,6 +27,7 @@ import MediaGallery from 'mastodon/components/media_gallery';
 import { PictureInPicturePlaceholder } from 'mastodon/components/picture_in_picture_placeholder';
 import StatusContent from 'mastodon/components/status_content';
 import { QuotedStatus } from 'mastodon/components/status_quoted';
+import { StatusReactions } from 'mastodon/components/status_reactions';
 import { VisibilityIcon } from 'mastodon/components/visibility_icon';
 import { Audio } from 'mastodon/features/audio';
 import { CollectionPreviewCard } from 'mastodon/features/collections/components/collection_preview_card';
@@ -497,6 +498,8 @@ export const DetailedStatus: React.FC<{
             )}
           </>
         )}
+
+        <StatusReactions status={properStatus} />
 
         <div className='detailed-status__meta'>
           <div className='detailed-status__meta__line'>

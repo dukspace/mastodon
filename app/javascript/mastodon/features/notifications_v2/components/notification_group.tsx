@@ -10,6 +10,7 @@ import { NotificationAdminReport } from './notification_admin_report';
 import { NotificationAdminSignUp } from './notification_admin_sign_up';
 import { NotificationAnnualReport } from './notification_annual_report';
 import { NotificationCollection } from './notification_collection';
+import { NotificationEmojiReaction } from './notification_emoji_reaction';
 import { NotificationFavourite } from './notification_favourite';
 import { NotificationFollow } from './notification_follow';
 import { NotificationFollowRequest } from './notification_follow_request';
@@ -66,6 +67,14 @@ export const NotificationGroup: React.FC<{
     case 'favourite':
       content = (
         <NotificationFavourite
+          unread={unread}
+          notification={notificationGroup}
+        />
+      );
+      break;
+    case 'emoji_reaction':
+      content = (
+        <NotificationEmojiReaction
           unread={unread}
           notification={notificationGroup}
         />

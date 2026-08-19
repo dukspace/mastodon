@@ -302,6 +302,10 @@ class EmojiPickerDropdown extends PureComponent {
     onSkinTone: PropTypes.func.isRequired,
     skinTone: PropTypes.number.isRequired,
     disabled: PropTypes.bool,
+    className: PropTypes.string,
+    buttonClassName: PropTypes.string,
+    inverted: PropTypes.bool,
+    title: PropTypes.string,
   };
 
   state = {
@@ -363,13 +367,14 @@ class EmojiPickerDropdown extends PureComponent {
   };
 
   render() {
-    const { intl, onPickEmoji, onSkinTone, skinTone, frequentlyUsedEmojis, disabled } = this.props;
-    const title = intl.formatMessage(messages.emoji);
+    const { intl, onPickEmoji, onSkinTone, skinTone, frequentlyUsedEmojis, disabled, className, buttonClassName, inverted = true, title: titleOverride } = this.props;
+    const title = titleOverride ?? intl.formatMessage(messages.emoji);
     const { active, loading, placement } = this.state;
 
     return (
-      <div className='emoji-picker-dropdown' onKeyDown={this.handleKeyDown} ref={this.setTargetRef}>
+      <div className={classNames('emoji-picker-dropdown', className)} onKeyDown={this.handleKeyDown} ref={this.setTargetRef}>
         <IconButton
+          className={buttonClassName}
           title={title}
           aria-expanded={active}
           active={active}
@@ -377,7 +382,7 @@ class EmojiPickerDropdown extends PureComponent {
           onClick={this.onToggle}
           disabled={disabled}
           id="emoji"
-          inverted
+          inverted={inverted}
         />
 
         <Overlay show={active} placement={placement} flip target={this.findTarget} popperConfig={{ strategy: 'fixed', onFirstUpdate: this.handleOverlayEnter }}>

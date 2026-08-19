@@ -21,6 +21,7 @@ class Favourite < ApplicationRecord
   belongs_to :status,  inverse_of: :favourites
 
   has_one :notification, as: :activity, dependent: :destroy
+  has_one :status_reaction, dependent: :destroy
 
   validates :status_id, uniqueness: { scope: :account_id }
 

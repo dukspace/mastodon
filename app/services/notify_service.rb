@@ -16,6 +16,7 @@ class NotifyService < BaseService
     annual_report
     added_to_collection
     collection_update
+    emoji_reaction
   ).freeze
 
   class BaseCondition
@@ -219,6 +220,7 @@ class NotifyService < BaseService
     @recipient    = recipient
     @activity     = activity
     @notification = Notification.new(account: @recipient, type: type, activity: @activity)
+    @notification.status_reaction = @options[:status_reaction] || StatusReaction.find_by(id: @options[:status_reaction_id])
 
     # For certain conditions we don't need to create a notification at all
     return if drop?

@@ -115,9 +115,16 @@ class Trends::Statuses < Trends::Base
   end
 
   def calculate_scores(statuses, at_time)
+    reaction_favourite_counts = StatusReaction
+      .where(status_id: statuses.map(&:id))
+      .where.not(favourite_id: nil)
+      .group(:status_id)
+      .count
+
     items = statuses.map do |status|
-      expected  = 1.0
-      observed  = (status.reblogs_count + status.favourites_count).to_f
+      expected = 1.0
+      favourites_count = status.favourites_count - reaction_favourite_counts.fetch(status.id, 0)
+      observed = (status.reblogs_count + [favourites_count, 0].max).to_f
 
       score = if expected > observed || observed < options[:threshold]
                 0

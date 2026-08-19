@@ -35,6 +35,7 @@ import { saveSettings } from './settings';
 
 function notificationTypeForFilter(type: NotificationType) {
   if (type === 'quoted_update') return 'update';
+  if (type === 'emoji_reaction') return 'favourite';
   else return type;
 }
 
@@ -44,6 +45,8 @@ function notificationTypeForQuickFilter(type: NotificationType) {
       return 'update';
     case 'quote':
       return 'mention';
+    case 'emoji_reaction':
+      return 'favourite';
     case 'collection_update':
       return 'collection';
     case 'added_to_collection':
@@ -104,7 +107,7 @@ function dispatchAssociatedRecords(
 }
 
 function selectNotificationGroupedTypes(state: RootState) {
-  const types: NotificationType[] = ['favourite', 'reblog'];
+  const types: NotificationType[] = ['favourite', 'emoji_reaction', 'reblog'];
 
   if (selectSettingsNotificationsGroupFollows(state)) types.push('follow');
 

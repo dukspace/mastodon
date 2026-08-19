@@ -13,6 +13,7 @@ class REST::NotificationGroupSerializer < ActiveModel::Serializer
   attribute :latest_page_notification_at, if: :paginated?
 
   attribute :fallback, if: :needs_fallback?
+  has_one :reaction, serializer: REST::StatusReactionSerializer, if: :reaction?
 
   attribute :sample_account_ids
   attribute :status_id, if: :status_type?
@@ -31,7 +32,11 @@ class REST::NotificationGroupSerializer < ActiveModel::Serializer
   end
 
   def status_type?
-    [:favourite, :reblog, :status, :mention, :poll, :update, :quote, :quoted_update].include?(object.type)
+    [:favourite, :emoji_reaction, :reblog, :status, :mention, :poll, :update, :quote, :quoted_update].include?(object.type)
+  end
+
+  def reaction?
+    object.reaction.present?
   end
 
   def collection_type?

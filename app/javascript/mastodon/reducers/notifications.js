@@ -19,6 +19,7 @@ export const notificationToMap = notification => ImmutableMap({
   report: notification.report ? fromJS(notification.report) : null,
   event: notification.event ? fromJS(notification.event) : null,
   moderation_warning: notification.moderation_warning ? fromJS(notification.moderation_warning) : null,
+  reaction: notification.reaction ? fromJS(notification.reaction) : null,
 });
 
 export default function notifications(state = initialState, action) {

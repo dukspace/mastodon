@@ -3,6 +3,8 @@ import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router-dom';
 
 import StarIcon from '@/material-icons/400-24px/star-fill.svg?react';
+import { Emoji } from 'mastodon/components/emoji';
+import { isUnicodeEmoji } from 'mastodon/features/emoji/utils';
 import type { NotificationGroupFavourite } from 'mastodon/models/notification_group';
 import { useAppSelector } from 'mastodon/store';
 
@@ -89,6 +91,29 @@ export const NotificationFavourite: React.FC<{
       labelSeeMoreHref={
         statusAccount ? `/@${statusAccount}/${statusId}/favourites` : undefined
       }
+      additionalContent={
+        notification.reaction && (
+          <span className='notification-reaction'>
+            {notification.reaction.url ? (
+              <img
+                className='notification-reaction-emoji'
+                src={notification.reaction.url}
+                alt={`:${notification.reaction.name}:`}
+                title={`:${notification.reaction.name}:`}
+              />
+            ) : (
+              <Emoji
+                code={
+                  isUnicodeEmoji(notification.reaction.name)
+                    ? notification.reaction.name
+                    : `:${notification.reaction.name}:`
+                }
+              />
+            )}
+          </span>
+        )
+      }
+      additionalContentClassName='notification-group__main__additional-content--reaction'
       unread={unread}
     />
   );

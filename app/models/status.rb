@@ -87,6 +87,7 @@ class Status < ApplicationRecord
   has_one :owned_conversation, class_name: 'Conversation', foreign_key: 'parent_status_id', inverse_of: :parent_status, dependent: nil
 
   has_many :favourites, inverse_of: :status, dependent: :destroy
+  has_many :status_reactions, inverse_of: :status, dependent: :destroy
   has_many :bookmarks, inverse_of: :status, dependent: :destroy
   has_many :reblogs, foreign_key: 'reblog_of_id', class_name: 'Status', inverse_of: :reblog, dependent: :destroy
   has_many :reblogged_by_accounts, through: :reblogs, class_name: 'Account', source: :account
@@ -205,6 +206,10 @@ class Status < ApplicationRecord
 
   def local?
     attributes['local'] || uri.nil?
+  end
+
+  def reactions(account = nil)
+    StatusReaction.summaries_for([id], account).fetch(id, [])
   end
 
   def in_reply_to_local_account?

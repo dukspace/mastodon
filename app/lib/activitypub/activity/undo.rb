@@ -11,6 +11,8 @@ class ActivityPub::Activity::Undo < ActivityPub::Activity
       undo_follow
     when 'Like'
       undo_like
+    when 'EmojiReact'
+      undo_emoji_react
     when 'Block'
       undo_block
     when nil
@@ -25,7 +27,7 @@ class ActivityPub::Activity::Undo < ActivityPub::Activity
     # global index, we have to guess what object it is.
     return if object_uri.nil?
 
-    try_undo_announce || try_undo_accept || try_undo_follow || try_undo_like || try_undo_block || delete_later!(object_uri)
+    try_undo_announce || try_undo_accept || try_undo_follow || try_undo_reaction || try_undo_like || try_undo_block || delete_later!(object_uri)
   end
 
   def try_undo_announce
@@ -57,6 +59,14 @@ class ActivityPub::Activity::Undo < ActivityPub::Activity
   def try_undo_like
     # There is an index on accounts, but an account may have *many* favs, so this may be too costly
     false
+  end
+
+  def try_undo_reaction
+    reaction = StatusReaction.find_by(account: @account, activity_uri: object_uri)
+    return false if reaction.nil?
+
+    reaction.favourite&.destroy! || reaction.destroy!
+    true
   end
 
   def try_undo_block
@@ -105,11 +115,32 @@ class ActivityPub::Activity::Undo < ActivityPub::Activity
 
     return if status.nil? || !status.account.local?
 
-    if @account.favourited?(status)
-      favourite = status.favourites.where(account: @account).first
-      favourite&.destroy
+    reaction_uri = value_or_id(@object)
+    reaction = StatusReaction.find_by(account: @account, activity_uri: reaction_uri)
+    current_reaction = StatusReaction.find_by(account: @account, status: status)
+
+    # A delayed Undo for a superseded reaction must not remove the current one.
+    return if reaction.nil? && current_reaction&.activity_type_like?
+
+    favourite = status.favourites.find_by(account: @account)
+
+    if reaction
+      reaction.favourite ? reaction.favourite.destroy! : reaction.destroy!
+    elsif favourite
+      favourite.destroy!
     else
       delete_later!(object_uri)
+    end
+  end
+
+  def undo_emoji_react
+    reaction_uri = value_or_id(@object)
+    reaction = StatusReaction.find_by(account: @account, activity_uri: reaction_uri)
+
+    if reaction
+      reaction.destroy!
+    else
+      delete_later!(reaction_uri)
     end
   end
 

@@ -14,6 +14,8 @@ class UnfavouriteService < BaseService
 
   def create_notification(favourite)
     status = favourite.status
+    return if StatusReaction.exists?(account: favourite.account, status: status, activity_type: :like)
+
     ActivityPub::DeliveryWorker.perform_async(build_json(favourite), favourite.account_id, status.account.inbox_url)
   end
 

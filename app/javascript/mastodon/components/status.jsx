@@ -30,6 +30,7 @@ import { LinkedDisplayName } from './display_name';
 import { getHashtagBarForStatus } from './hashtag_bar';
 import StatusActionBar from './status_action_bar';
 import StatusContent from './status_content';
+import { StatusReactions } from './status_reactions';
 import { StatusThreadLabel } from './status_thread_label';
 import { CollectionPreviewCard } from '../features/collections/components/collection_preview_card';
 import { compareUrls } from '../utils/compare_urls';
@@ -633,6 +634,8 @@ class Status extends ImmutablePureComponent {
                 {children}
               </>
             )}
+
+            {!isQuotedPost && <StatusReactions status={status} />}
 
             {(showActions && !isQuotedPost) &&
               <StatusActionBar scrollKey={scrollKey} status={status} account={account}  {...other} />
