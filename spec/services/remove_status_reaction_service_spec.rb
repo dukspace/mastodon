@@ -27,7 +27,7 @@ RSpec.describe RemoveStatusReactionService do
       direct_payloads = ActivityPub::DeliveryWorker.jobs.pluck('args').map { |args| JSON.parse(args[0]) }
 
       expect(direct_payloads.pluck('type')).to contain_exactly('Undo', 'Like')
-      expect(ActivityPub::DeliveryWorker.jobs.pluck('args').map { |args| args[2] }).to all(eq(author.inbox_url))
+      expect(ActivityPub::DeliveryWorker.jobs.pluck('args').pluck(2)).to all(eq(author.inbox_url))
       expect(favourite.reload).to be_persisted
     end
   end
