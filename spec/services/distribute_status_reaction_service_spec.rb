@@ -72,14 +72,18 @@ RSpec.describe DistributeStatusReactionService do
     let(:remote_mention) do
       Fabricate(:account, domain: 'audience.example', protocol: :activitypub, inbox_url: 'https://audience.example/users/mention/inbox', shared_inbox_url: shared_inbox)
     end
+    let(:late_follower) do
+      Fabricate(:account, domain: 'late.example', protocol: :activitypub, inbox_url: 'https://late.example/users/follower/inbox', shared_inbox_url: 'https://late.example/inbox')
+    end
 
     before do
       Fabricate(:follow, account: remote_follower, target_account: author)
       Fabricate(:mention, account: remote_mention, status: status)
+      Fabricate(:follow, account: late_follower, target_account: author, created_at: status.created_at + 1.second)
       distribute
     end
 
-    it 'delivers to the original audience with shared inbox de-duplication' do
+    it 'delivers to the audience that existed when the status was created with shared inbox de-duplication' do
       expect(delivery_inboxes).to contain_exactly(shared_inbox)
       expect(ActivityPub::RawDistributionWorker).to_not have_enqueued_sidekiq_job
     end

@@ -27,7 +27,7 @@ class DistributeStatusReactionService < BaseService
   def distribute_to_status_audience
     inboxes = mentioned_account_inboxes
     inboxes << status_author_inbox
-    inboxes.concat(@status.account.followers.inboxes) if @status.private_visibility? && @status.account.local?
+    inboxes.concat(status_audience_follower_inboxes) if @status.private_visibility? && @status.account.local?
 
     deliver_to_inboxes(inboxes)
   end
@@ -40,6 +40,11 @@ class DistributeStatusReactionService < BaseService
 
   def status_author_inbox
     @status.account.preferred_inbox_url if @status.account.remote? && @status.account.activitypub?
+  end
+
+  def status_audience_follower_inboxes
+    follower_ids = @status.account.passive_relationships.where(created_at: ..@status.created_at).select(:account_id)
+    Account.where(id: follower_ids).inboxes
   end
 
   def deliver_to_inboxes(inboxes)
