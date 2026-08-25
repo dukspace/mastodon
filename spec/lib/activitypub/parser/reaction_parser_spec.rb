@@ -28,8 +28,10 @@ RSpec.describe ActivityPub::Parser::ReactionParser do
     shortcode = 'a' * (CustomEmoji::MAX_SHORTCODE_SIZE + 1)
     tag = { type: 'Emoji', name: ":#{shortcode}:", icon: { url: 'https://remote.example/emoji.png' } }
 
-    expect(ActivityPub::Parser::CustomEmojiParser).to_not receive(:new)
+    allow(ActivityPub::Parser::CustomEmojiParser).to receive(:new).and_call_original
+
     expect(parse(content: ":#{shortcode}:", tag: [tag])).to be_nil
+    expect(ActivityPub::Parser::CustomEmojiParser).to_not have_received(:new)
   end
 
   it 'does not create or download a new custom emoji after the remote domain limit is reached' do

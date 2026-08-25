@@ -56,9 +56,10 @@ RSpec.describe ActivityPub::Activity::EmojiReact do
       let(:status) { Fabricate(:status, account: recipient, visibility: :direct) }
 
       it 'ignores a reaction from an account outside the status audience before parsing it' do
-        expect(ActivityPub::Parser::ReactionParser).to_not receive(:new)
+        allow(ActivityPub::Parser::ReactionParser).to receive(:new).and_call_original
 
         expect { perform }.to_not change(StatusReaction, :count)
+        expect(ActivityPub::Parser::ReactionParser).to_not have_received(:new)
       end
 
       it 'accepts a reaction from an explicitly mentioned account' do
