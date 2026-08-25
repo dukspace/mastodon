@@ -40,6 +40,6 @@ class ActivityPub::StatusReactionSerializer < ActivityPub::Serializer
   end
 
   def like?
-    object.activity_type_like?
+    !object.activity_type_emoji_react?
   end
 end
