@@ -25,7 +25,7 @@ module Mastodon
     end
 
     def build_metadata
-      version_configuration[:metadata]
+      version_configuration[:metadata].presence || 'dks'
     end
 
     def to_a

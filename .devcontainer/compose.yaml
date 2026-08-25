@@ -18,10 +18,7 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       DB_PORT: '5432'
-      ES_ENABLED: 'true'
-      ES_HOST: es
-      ES_PORT: '9200'
-      LIBRE_TRANSLATE_ENDPOINT: http://libretranslate:5000
+      ES_ENABLED: false
       LOCAL_DOMAIN: ${LOCAL_DOMAIN:-localhost:3000}
       VITE_DEV_SERVER_PUBLIC: ${VITE_DEV_SERVER_PUBLIC:-localhost:3036}
     # Overrides default command so things don't shut down after the process ends.
