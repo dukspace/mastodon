@@ -30,4 +30,35 @@ RSpec.describe ActivityPub::StatusReactionSerializer do
       expect(subject).to_not have_key('_misskey_reaction')
     end
   end
+
+  context 'with a legacy local activity type' do
+    let(:activity_type) { :local }
+
+    it 'uses the Like-compatible Misskey fallback when federated' do
+      expect(subject).to include('type' => 'Like', 'content' => '👍', '_misskey_reaction' => '👍')
+    end
+  end
+
+  context 'with a custom emoji' do
+    let(:activity_type) { :like }
+    let(:custom_emoji) { Fabricate(:custom_emoji) }
+    let(:reaction) do
+      StatusReaction.create!(
+        account: account,
+        status: status,
+        name: custom_emoji.shortcode,
+        custom_emoji: custom_emoji,
+        activity_type: activity_type
+      )
+    end
+
+    it 'includes both reaction fallbacks and the Emoji tag' do
+      expect(subject).to include(
+        'type' => 'Like',
+        'content' => ":#{custom_emoji.shortcode}:",
+        '_misskey_reaction' => ":#{custom_emoji.shortcode}:"
+      )
+      expect(subject.fetch('tag')).to contain_exactly(include('type' => 'Emoji', 'name' => ":#{custom_emoji.shortcode}:"))
+    end
+  end
 end
