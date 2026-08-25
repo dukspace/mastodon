@@ -14,6 +14,13 @@ RSpec.describe RemoveStatusReactionService do
     payload = JSON.parse(ActivityPub::RawDistributionWorker.jobs.sole['args'].first)
 
     expect(payload['type']).to eq('Undo')
+    expect(payload).to include(
+      'to' => [ActivityPub::TagManager::COLLECTIONS[:public]],
+      'cc' => contain_exactly(
+        ActivityPub::TagManager.instance.followers_uri_for(reactor),
+        ActivityPub::TagManager.instance.uri_for(status.account)
+      )
+    )
     expect(StatusReaction.exists?(reaction.id)).to be(false)
   end
 
