@@ -33,4 +33,25 @@ RSpec.describe ActivityPub::Activity::Undo do
 
     expect(StatusReaction.find_by(account: sender, status: status)).to have_attributes(name: '👎')
   end
+
+  context 'when the original status is remote' do
+    let(:status) { Fabricate(:status, account: Fabricate(:account, domain: 'author.example', protocol: :activitypub)) }
+
+    it 'removes an exact Like reaction without requiring a Favourite' do
+      reaction = StatusReaction.create!(status: status, account: sender, name: '👍', activity_type: :like, activity_uri: 'https://remote.example/reactions/1')
+
+      perform_undo({ id: reaction.activity_uri, type: 'Like', object: ActivityPub::TagManager.instance.uri_for(status), _misskey_reaction: '👍' })
+
+      expect(StatusReaction.exists?(reaction.id)).to be(false)
+      expect(status.favourites.where(account: sender)).to be_empty
+    end
+
+    it 'does not remove a replacement when an older Like Undo arrives' do
+      replacement = StatusReaction.create!(status: status, account: sender, name: '👎', activity_type: :like, activity_uri: 'https://remote.example/reactions/new')
+
+      perform_undo({ id: 'https://remote.example/reactions/old', type: 'Like', object: ActivityPub::TagManager.instance.uri_for(status), _misskey_reaction: '👍' })
+
+      expect(replacement.reload).to have_attributes(name: '👎')
+    end
+  end
 end

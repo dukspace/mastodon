@@ -3,7 +3,7 @@
 class ActivityPub::StatusReactionSerializer < ActivityPub::Serializer
   context_extensions :emoji, :misskey_reactions, :emoji_reactions
 
-  attributes :id, :type, :actor, :content
+  attributes :id, :type, :actor, :content, :to, :cc
   attribute :reaction, key: :_misskey_reaction, if: :like?
   attribute :target, key: :object
 
@@ -31,6 +31,14 @@ class ActivityPub::StatusReactionSerializer < ActivityPub::Serializer
     ActivityPub::TagManager.instance.uri_for(object.status)
   end
 
+  def to
+    audience.to
+  end
+
+  def cc
+    audience.cc
+  end
+
   def tags
     [object.custom_emoji]
   end
@@ -40,6 +48,10 @@ class ActivityPub::StatusReactionSerializer < ActivityPub::Serializer
   end
 
   def like?
-    object.activity_type_like?
+    !object.activity_type_emoji_react?
+  end
+
+  def audience
+    @audience ||= ActivityPub::StatusReactionAudience.new(object)
   end
 end

@@ -73,6 +73,12 @@ class ActivityPub::Activity
     ActivityPub::TagManager.instance.uri_to_resource(uri, Status)
   end
 
+  def reaction_allowed_for_status?(status)
+    return true if status.account.local? || status.distributable?
+
+    status.account_id == @account.id || status.active_mentions.exists?(account_id: @account.id)
+  end
+
   def account_from_uri(uri)
     ActivityPub::TagManager.instance.uri_to_resource(uri, Account)
   end

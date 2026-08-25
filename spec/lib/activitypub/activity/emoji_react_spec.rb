@@ -40,4 +40,33 @@ RSpec.describe ActivityPub::Activity::EmojiReact do
 
     expect(StatusReaction.where(account: sender, status: status).sole).to have_attributes(name: '👎', activity_uri: replacement[:id])
   end
+
+  context 'when the original status is remote' do
+    let(:recipient) { Fabricate(:account, domain: 'author.example', protocol: :activitypub) }
+
+    it 'stores the reaction without creating a notification' do
+      expect { perform }
+        .to change(StatusReaction, :count).by(1)
+        .and not_change(Notification, :count)
+
+      expect(StatusReaction.last).to have_attributes(status: status, account: sender, activity_uri: json[:id])
+    end
+
+    context 'when the status has restricted visibility' do
+      let(:status) { Fabricate(:status, account: recipient, visibility: :direct) }
+
+      it 'ignores a reaction from an account outside the status audience before parsing it' do
+        allow(ActivityPub::Parser::ReactionParser).to receive(:new).and_call_original
+
+        expect { perform }.to_not change(StatusReaction, :count)
+        expect(ActivityPub::Parser::ReactionParser).to_not have_received(:new)
+      end
+
+      it 'accepts a reaction from an explicitly mentioned account' do
+        Fabricate(:mention, status: status, account: sender)
+
+        expect { perform }.to change(StatusReaction, :count).by(1)
+      end
+    end
+  end
 end

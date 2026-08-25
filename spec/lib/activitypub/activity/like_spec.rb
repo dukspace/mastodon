@@ -65,5 +65,59 @@ RSpec.describe ActivityPub::Activity::Like do
         expect(Trends.statuses).to have_received(:register).with(status)
       end
     end
+
+    context 'when the original status is remote' do
+      let(:recipient) { Fabricate(:account, domain: 'author.example', protocol: :activitypub) }
+
+      context 'with a Misskey reaction' do
+        let(:json) { super().merge(_misskey_reaction: '👍') }
+
+        it 'stores only the reaction extension data' do
+          reaction = StatusReaction.find_by(account: sender, status: status)
+
+          expect(reaction).to have_attributes(name: '👍', activity_type: 'like', activity_uri: 'foo', favourite: nil)
+          expect(status.favourites.where(account: sender)).to be_empty
+          expect(Notification.where(from_account: sender)).to be_empty
+          expect(Trends.statuses).to_not have_received(:register)
+        end
+      end
+
+      context 'with a plain Like' do
+        it 'does not mirror the third-party favourite' do
+          expect(status.favourites.where(account: sender)).to be_empty
+          expect(StatusReaction.where(account: sender, status: status)).to be_empty
+          expect(Trends.statuses).to_not have_received(:register)
+        end
+      end
+
+      context 'with invalid reaction content' do
+        let(:json) { super().merge(content: '<b>not an emoji</b>') }
+
+        it 'does not mirror the third-party activity' do
+          expect(status.favourites.where(account: sender)).to be_empty
+          expect(StatusReaction.where(account: sender, status: status)).to be_empty
+        end
+      end
+
+      context 'when the status has restricted visibility' do
+        let(:status) { Fabricate(:status, account: recipient, visibility: :direct) }
+        let(:json) { super().merge(_misskey_reaction: '👍') }
+
+        it 'ignores a reaction from an account outside the status audience' do
+          expect(StatusReaction.where(account: sender, status: status)).to be_empty
+        end
+
+        context 'when the sender is explicitly mentioned' do
+          before do
+            Fabricate(:mention, status: status, account: sender)
+            subject.perform
+          end
+
+          it 'accepts the reaction' do
+            expect(StatusReaction.find_by(account: sender, status: status)).to have_attributes(name: '👍')
+          end
+        end
+      end
+    end
   end
 end
