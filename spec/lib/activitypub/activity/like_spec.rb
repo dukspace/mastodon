@@ -98,6 +98,26 @@ RSpec.describe ActivityPub::Activity::Like do
           expect(StatusReaction.where(account: sender, status: status)).to be_empty
         end
       end
+
+      context 'when the status has restricted visibility' do
+        let(:status) { Fabricate(:status, account: recipient, visibility: :direct) }
+        let(:json) { super().merge(_misskey_reaction: '👍') }
+
+        it 'ignores a reaction from an account outside the status audience' do
+          expect(StatusReaction.where(account: sender, status: status)).to be_empty
+        end
+
+        context 'when the sender is explicitly mentioned' do
+          before do
+            Fabricate(:mention, status: status, account: sender)
+            subject.perform
+          end
+
+          it 'accepts the reaction' do
+            expect(StatusReaction.find_by(account: sender, status: status)).to have_attributes(name: '👍')
+          end
+        end
+      end
     end
   end
 end

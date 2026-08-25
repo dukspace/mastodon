@@ -4,7 +4,7 @@ class ActivityPub::Activity::Like < ActivityPub::Activity
   def perform
     original_status = status_from_uri(object_uri)
 
-    return if original_status.nil? || delete_arrived_first?(@json['id'])
+    return if original_status.nil? || !reaction_allowed_for_status?(original_status) || delete_arrived_first?(@json['id'])
 
     parsed_reaction = ActivityPub::Parser::ReactionParser.new(@json, @account).parse
     return store_remote_status_reaction(original_status, parsed_reaction) unless original_status.account.local?
