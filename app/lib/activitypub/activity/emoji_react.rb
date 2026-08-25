@@ -3,7 +3,7 @@
 class ActivityPub::Activity::EmojiReact < ActivityPub::Activity
   def perform
     original_status = status_from_uri(object_uri)
-    return if original_status.nil? || !original_status.account.local? || delete_arrived_first?(@json['id'])
+    return if original_status.nil? || delete_arrived_first?(@json['id'])
 
     parsed_reaction = ActivityPub::Parser::ReactionParser.new(@json, @account).parse
     return if parsed_reaction.nil?
@@ -16,7 +16,8 @@ class ActivityPub::Activity::EmojiReact < ActivityPub::Activity
       activity_type: :emoji_react,
       activity_uri: @json['id'],
       authorize: false,
-      federate: false
+      federate: false,
+      notify: original_status.account.local?
     )
   end
 end

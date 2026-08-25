@@ -40,4 +40,16 @@ RSpec.describe ActivityPub::Activity::EmojiReact do
 
     expect(StatusReaction.where(account: sender, status: status).sole).to have_attributes(name: '👎', activity_uri: replacement[:id])
   end
+
+  context 'when the original status is remote' do
+    let(:recipient) { Fabricate(:account, domain: 'author.example', protocol: :activitypub) }
+
+    it 'stores the reaction without creating a notification' do
+      expect { perform }
+        .to change(StatusReaction, :count).by(1)
+        .and not_change(Notification, :count)
+
+      expect(StatusReaction.last).to have_attributes(status: status, account: sender, activity_uri: json[:id])
+    end
+  end
 end
