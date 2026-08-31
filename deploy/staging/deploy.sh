@@ -55,15 +55,11 @@ if [[ "$(git rev-parse HEAD)" != "$deploy_sha" ]]; then
   exit 1
 fi
 
-test -f deploy/staging/compose.build.yml
-
 export MASTODON_IMAGE_TAG="sha-$deploy_sha"
-export MASTODON_SOURCE_COMMIT="$deploy_sha"
 
 compose=(
   docker compose
   -f docker-compose.yml
-  -f deploy/staging/compose.build.yml
 )
 
 show_diagnostics() {
@@ -74,7 +70,7 @@ show_diagnostics() {
 trap show_diagnostics ERR
 
 "${compose[@]}" config --quiet
-"${compose[@]}" build --pull web streaming
+"${compose[@]}" pull web streaming sidekiq
 "${compose[@]}" run --rm web bundle exec rails db:prepare
 "${compose[@]}" up -d --remove-orphans
 
@@ -111,19 +107,19 @@ fi
 
 stale_tags="$({
   docker image ls \
-    --filter 'reference=mastodon-staging:sha-*' \
+    --filter 'reference=ghcr.io/dukspace/mastodon:sha-*' \
     --format '{{.Repository}}:{{.Tag}}' |
     while read -r image_ref; do
       created="$(docker image inspect --format '{{.Created}}' "$image_ref")"
-      tag="${image_ref#mastodon-staging:}"
+      tag="${image_ref#ghcr.io/dukspace/mastodon:}"
       printf '%s %s\n' "$created" "$tag"
     done
 } | sort -r | awk 'NR > 3 { print $2 }')"
 
 for stale_tag in $stale_tags; do
   docker image rm \
-    "mastodon-staging:$stale_tag" \
-    "mastodon-staging-streaming:$stale_tag" || true
+    "ghcr.io/dukspace/mastodon:$stale_tag" \
+    "ghcr.io/dukspace/mastodon-streaming:$stale_tag" || true
 done
 
 trap - ERR

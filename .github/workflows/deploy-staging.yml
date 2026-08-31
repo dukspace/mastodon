@@ -1,4 +1,4 @@
-name: Deploy production to staging
+name: Build and deploy production to staging
 
 on:
   push:
@@ -10,12 +10,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-staging
+  group: production-container-and-staging
   cancel-in-progress: false
 
 jobs:
   verify:
     name: Verify staging candidate
+    if: github.ref == 'refs/heads/production'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
@@ -97,22 +98,67 @@ jobs:
       - name: Validate staging Compose configuration
         env:
           MASTODON_IMAGE_TAG: validation
-          MASTODON_SOURCE_COMMIT: ${{ github.sha }}
         run: |
           touch .env.production
-          docker compose \
-            -f docker-compose.yml \
-            -f deploy/staging/compose.build.yml \
-            config --quiet
+          docker compose config --quiet
+
+  build-image:
+    needs: verify
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-container-image.yml
+    with:
+      file_to_build: Dockerfile
+      cache: true
+      push_to_images: |
+        ghcr.io/dukspace/mastodon
+      version_metadata: production
+      flavor: |
+        latest=false
+      tags: |
+        type=raw,value=production
+        type=raw,value=sha-${{ github.sha }}
+      labels: |
+        org.opencontainers.image.description=Mastodon production image for dukspace
+        org.opencontainers.image.source=https://github.com/dukspace/mastodon
+        org.opencontainers.image.revision=${{ github.sha }}
+    secrets: inherit
+
+  build-image-streaming:
+    needs: verify
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-container-image.yml
+    with:
+      file_to_build: streaming/Dockerfile
+      cache: true
+      push_to_images: |
+        ghcr.io/dukspace/mastodon-streaming
+      version_metadata: production
+      flavor: |
+        latest=false
+      tags: |
+        type=raw,value=production
+        type=raw,value=sha-${{ github.sha }}
+      labels: |
+        org.opencontainers.image.description=Mastodon streaming production image for dukspace
+        org.opencontainers.image.source=https://github.com/dukspace/mastodon
+        org.opencontainers.image.revision=${{ github.sha }}
+    secrets: inherit
 
   deploy:
-    name: Build and deploy on Synology staging
-    needs: verify
+    name: Deploy GHCR images on Synology staging
+    needs:
+      - verify
+      - build-image
+      - build-image-streaming
     runs-on:
       - self-hosted
       - linux
       - staging
-    timeout-minutes: 90
+    timeout-minutes: 30
     environment:
       name: staging
       url: ${{ vars.STAGING_BASE_URL }}

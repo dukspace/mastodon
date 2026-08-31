@@ -1,13 +1,33 @@
 # Synology staging deployment
 
-Every push to `production` runs a focused verification suite, then dispatches
-the exact commit to a dedicated self-hosted runner on the Synology staging
-server. The NAS builds the web and streaming images locally, migrates the
-staging database, replaces the application containers, and checks their health.
-A final GitHub-hosted job verifies the public web and streaming endpoints at
-`https://pluviae.day`.
+Every push to `production` runs the focused verification suite, then builds and
+publishes native `linux/amd64` and `linux/arm64` container images on
+GitHub-hosted runners. The images are published to:
 
-No container registry or inbound SSH access is required.
+- `ghcr.io/dukspace/mastodon`
+- `ghcr.io/dukspace/mastodon-streaming`
+
+Each successful build receives both the moving `production` tag and an
+immutable `sha-<full-commit-sha>` tag. After both multi-platform manifests are
+available, the dedicated Synology runner pulls the immutable images, migrates
+the staging database, replaces the application containers, and checks their
+health. A final GitHub-hosted job verifies the public web and streaming
+endpoints at `https://pluviae.day`.
+
+No inbound SSH access is required, and the NAS does not compile application
+images.
+
+## Initial GHCR setup
+
+GitHub Container Registry creates new container packages as private packages.
+After the first successful image build, open the package settings for both
+`mastodon` and `mastodon-streaming` under the `dukspace` account and change
+their visibility to **Public**. Public GHCR images can be pulled anonymously;
+the visibility change cannot be reversed.
+
+Keep the staging runner offline until both packages are public. Then rerun or
+resume the deployment workflow and verify that the host can pull both images
+without `docker login`.
 
 ## Existing staging checkout
 
@@ -22,23 +42,20 @@ It expects that directory to contain:
 - a clean `production` checkout whose `origin` points to this repository;
 - the existing staging-only `.env.production`;
 - the existing `postgres14`, `redis`, and `public/system` data directories; and
-- a working `docker compose` v2 installation.
+- a working Docker Engine and Docker Compose v2 installation.
 
-The runner and deployment workflow must not copy, replace, or clean those
-persistent directories. The deployment script rejects tracked local changes,
-but leaves ignored and untracked staging data untouched.
+The deployment must not copy, replace, or clean those persistent directories.
+The script rejects tracked local changes but leaves ignored and untracked
+staging data untouched.
 
 ## Install the self-hosted runner
 
-Create a dedicated DSM user for GitHub Actions. Give it ownership or explicit
-read/write access to `/volume1/docker/mastodon` and permission to run Docker
-commands without interactive `sudo`. Do not grant the runner access to
-production-only paths or secrets.
+Create a dedicated DSM user with ownership or explicit read/write access to
+`/volume1/docker/mastodon` and permission to run Docker commands without
+interactive `sudo`. Do not grant it access to production-only paths or secrets.
 
-In GitHub, open **Settings → Actions → Runners → New self-hosted runner**. Select
-Linux and the architecture reported by `uname -m` on the NAS, then run the
-generated download and configuration commands as the dedicated user. Configure
-the runner with these values:
+In GitHub, open **Settings → Actions → Runners → New self-hosted runner** and
+configure the runner with:
 
 ```text
 name: mastodon-staging
@@ -46,10 +63,9 @@ labels: staging
 work folder: _work
 ```
 
-Keep the default `self-hosted` and `linux` labels. Install the runner as a
-persistent service when supported by DSM; otherwise create a DSM Task Scheduler
-startup task that runs the runner's `run.sh` as the dedicated user. Confirm in
-GitHub that the runner is online and has all three labels:
+Keep the default `self-hosted` and `linux` labels. Install it as a persistent
+service or start it through DSM Task Scheduler. Confirm that it is online with
+all three labels:
 
 ```text
 self-hosted, linux, staging
@@ -62,68 +78,76 @@ v2. Verify the dedicated user before enabling deployment:
 git -C /volume1/docker/mastodon status --short
 docker version
 docker compose version
+docker pull ghcr.io/dukspace/mastodon:production
+docker pull ghcr.io/dukspace/mastodon-streaming:production
 ```
 
 ## Configure the GitHub environment
 
-Create an Actions environment named `staging` with no required reviewers so
-deployment remains automatic. Restrict its deployment branches to
-`production`, then add these environment variables:
+Create an Actions environment named `staging` with no required reviewers and
+restrict its deployment branches to `production`. Add these environment
+variables:
 
 | Variable              | Value                      |
 | --------------------- | -------------------------- |
 | `STAGING_DEPLOY_PATH` | `/volume1/docker/mastodon` |
 | `STAGING_BASE_URL`    | `https://pluviae.day`      |
 
-This design does not require deployment secrets. The existing
-`.env.production` remains only on the NAS.
+The existing `.env.production` remains only on the NAS. It contains container
+environment variables; it does not control Compose image interpolation.
 
 ## Deployment behavior
 
-The workflow performs three ordered jobs:
+The workflow runs these stages in order:
 
-1. `verify` runs the production feature RSpec suite, RuboCop, JavaScript tests,
-   ESLint, TypeScript, theme Stylelint, and Compose validation on a
-   GitHub-hosted runner.
-2. `deploy` runs only after verification succeeds. The Synology runner updates
-   the fixed checkout to the exact triggering SHA, builds SHA-tagged images,
+1. `verify` runs the production feature specs, RuboCop, JavaScript tests,
+   ESLint, TypeScript, theme Stylelint, and Compose validation.
+2. `build-image` and `build-image-streaming` build both supported architectures
+   in parallel and publish the multi-platform GHCR manifests.
+3. `deploy` checks out the exact triggering commit, exports
+   `MASTODON_IMAGE_TAG=sha-<full-commit-sha>`, pulls all application images,
    runs `rails db:prepare`, starts the stack, and checks web, streaming, and
    Sidekiq internally.
-3. `smoke-test` checks `/health` and `/api/v1/streaming/health` through the
-   public `https://pluviae.day` route.
+4. `smoke-test` checks `/health` and `/api/v1/streaming/health` through the
+   public staging URL.
 
-If a newer `production` push supersedes a queued run, the older deployment is
-skipped. Build failures leave the currently running containers untouched. A
-failure after database migration or container replacement is reported with the
-previous checkout SHA, container status, and recent logs; it is not rolled back
-automatically because the migrated schema may not be backward-compatible.
+Workflow runs are serialized so an older build cannot overwrite the moving
+`production` tag after a newer build. The deploy script also skips a commit
+that has been superseded on `origin/production`.
 
-After a successful deployment, the script keeps the three newest
-`mastodon-staging` and `mastodon-staging-streaming` SHA tags. It does not prune
-Docker build cache or unrelated images.
+Image build or pull failures leave the currently running containers untouched.
+A failure after database migration or container replacement reports the
+previous checkout SHA, service status, and recent logs. It does not roll back
+automatically because a migrated schema may not be backward-compatible.
 
-## Initial rollout and recovery
+After a successful deployment, the script retains the three newest locally
+pulled `sha-*` tags for both application images. It does not prune unrelated
+images.
 
-Install and verify the runner and GitHub environment before pushing the workflow
-to `production`. The first push containing the workflow will deploy that exact
-commit after verification succeeds.
+## Manual deployment and recovery
 
-If deployment fails after the new containers start, inspect the Actions log and
-the NAS directly:
+Without `MASTODON_IMAGE_TAG`, Compose uses the current `production` images:
 
 ```shell
 cd /volume1/docker/mastodon
-export MASTODON_IMAGE_TAG=sha-<failed-or-recovery-sha>
-export MASTODON_SOURCE_COMMIT=<failed-or-recovery-sha>
-docker compose \
-  -f docker-compose.yml \
-  -f deploy/staging/compose.build.yml \
-  ps
-docker compose \
-  -f docker-compose.yml \
-  -f deploy/staging/compose.build.yml \
-  logs --tail=100 web streaming sidekiq
+docker compose pull web streaming sidekiq
+docker compose run --rm web bundle exec rails db:prepare
+docker compose up -d --remove-orphans
 ```
 
-Choose a recovery image only after checking migration compatibility. The
-workflow intentionally leaves that decision to the operator.
+For a reproducible deployment or recovery, set the Compose interpolation
+variable in the invoking shell. Do not add it only to `.env.production`:
+
+```shell
+cd /volume1/docker/mastodon
+export MASTODON_IMAGE_TAG=sha-<full-production-commit-sha>
+docker compose config --images
+docker compose pull web streaming sidekiq
+docker compose run --rm web bundle exec rails db:prepare
+docker compose up -d --remove-orphans
+docker compose ps
+docker compose logs --tail=100 web streaming sidekiq
+```
+
+Choose a recovery image only after checking migration compatibility. GHCR
+retains the immutable SHA tags even after older local copies are removed.

@@ -86,6 +86,7 @@ jobs:
             MASTODON_VERSION_METADATA=${{ inputs.version_metadata }}
             SOURCE_COMMIT=${{ github.sha }}
           platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
           provenance: false
           push: ${{ inputs.push_to_images != '' }}
           cache-from: ${{ inputs.cache && format('type=gha,scope=build-{0}-{1}', hashFiles(inputs.file_to_build), env.PLATFORM_PAIR) || '' }}
