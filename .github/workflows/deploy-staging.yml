@@ -1,0 +1,176 @@
+name: Deploy production to staging
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify staging candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 1s
+          --health-timeout 3s
+          --health-retries 30
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 1s
+          --health-timeout 3s
+          --health-retries 30
+        ports:
+          - 6379:6379
+    env:
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASS: postgres
+      RAILS_ENV: test
+      NODE_ENV: test
+      BUNDLE_WITH: test
+
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Ruby
+        uses: ./.github/actions/setup-ruby
+        with:
+          additional-system-dependencies: ffmpeg
+
+      - name: Set up JavaScript
+        uses: ./.github/actions/setup-javascript
+
+      - name: Prepare test database
+        run: bin/rails db:setup
+
+      - name: Run production feature specs
+        run: |
+          bundle exec rspec \
+            spec/requests/api/v1/statuses/reactions_spec.rb \
+            spec/models/status_reaction_spec.rb \
+            spec/models/reaction_domain_capability_spec.rb \
+            spec/lib/activitypub/activity/emoji_react_spec.rb \
+            spec/lib/activitypub/activity/like_spec.rb \
+            spec/lib/activitypub/activity/undo_status_reaction_spec.rb \
+            spec/lib/activitypub/parser/reaction_parser_spec.rb \
+            spec/serializers/activitypub/status_reaction_serializer_spec.rb \
+            spec/serializers/rest/status_serializer_spec.rb \
+            spec/models/trends/statuses_spec.rb
+
+      - name: Run Ruby lint
+        run: bin/rubocop --format github
+
+      - name: Run JavaScript tests
+        run: yarn test:js run
+
+      - name: Run JavaScript lint and typecheck
+        run: |
+          yarn workspaces foreach --all --parallel run lint:js --max-warnings 0
+          yarn typecheck
+
+      - name: Lint production themes
+        run: >-
+          yarn stylelint
+          app/javascript/styles/golden_amber.scss
+          app/javascript/styles/verdant_canopy.scss
+
+      - name: Validate staging Compose configuration
+        env:
+          MASTODON_IMAGE_TAG: validation
+          MASTODON_SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          touch .env.production
+          docker compose \
+            -f docker-compose.yml \
+            -f deploy/staging/compose.build.yml \
+            config --quiet
+
+  deploy:
+    name: Build and deploy on Synology staging
+    needs: verify
+    runs-on:
+      - self-hosted
+      - linux
+      - staging
+    timeout-minutes: 90
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_BASE_URL }}
+    outputs:
+      deployed: ${{ steps.deploy.outputs.deployed }}
+      deployed_sha: ${{ steps.deploy.outputs.deployed_sha }}
+    env:
+      DEPLOY_SHA: ${{ github.sha }}
+      STAGING_DEPLOY_PATH: ${{ vars.STAGING_DEPLOY_PATH }}
+
+    steps:
+      - name: Check out deployment tooling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Validate deployment configuration
+        run: |
+          : "${STAGING_DEPLOY_PATH:?Set STAGING_DEPLOY_PATH in the staging environment}"
+
+      - name: Deploy exact production commit
+        id: deploy
+        run: deploy/staging/deploy.sh "$STAGING_DEPLOY_PATH" "$DEPLOY_SHA"
+
+  smoke-test:
+    name: Verify public staging endpoints
+    needs: deploy
+    if: needs.deploy.outputs.deployed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_BASE_URL }}
+    env:
+      STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+
+    steps:
+      - name: Check public web and streaming health
+        run: |
+          : "${STAGING_BASE_URL:?Set STAGING_BASE_URL in the staging environment}"
+          base_url="${STAGING_BASE_URL%/}"
+
+          curl \
+            --fail \
+            --location \
+            --max-time 15 \
+            --retry 12 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --show-error \
+            --silent \
+            "$base_url/health"
+
+          curl \
+            --fail \
+            --location \
+            --max-time 15 \
+            --retry 12 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --show-error \
+            --silent \
+            "$base_url/api/v1/streaming/health"
