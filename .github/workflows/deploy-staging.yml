@@ -154,6 +154,9 @@ jobs:
       - verify
       - build-image
       - build-image-streaming
+    permissions:
+      contents: read
+      packages: read
     runs-on:
       - self-hosted
       - linux
@@ -172,6 +175,13 @@ jobs:
     steps:
       - name: Check out deployment tooling
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Log in to the GitHub Container registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate deployment configuration
         run: |
