@@ -113,7 +113,7 @@ class ActivityPub::Activity::Undo < ActivityPub::Activity
   def undo_like
     status = status_from_uri(target_uri)
 
-    return if status.nil? || !status.account.local?
+    return if status.nil?
 
     reaction_uri = value_or_id(@object)
     reaction = StatusReaction.find_by(account: @account, activity_uri: reaction_uri)
@@ -122,11 +122,19 @@ class ActivityPub::Activity::Undo < ActivityPub::Activity
     # A delayed Undo for a superseded reaction must not remove the current one.
     return if reaction.nil? && current_reaction&.activity_type_like?
 
-    favourite = status.favourites.find_by(account: @account)
-
     if reaction
       reaction.favourite ? reaction.favourite.destroy! : reaction.destroy!
-    elsif favourite
+    elsif status.account.local?
+      undo_favourite(status)
+    else
+      delete_later!(reaction_uri)
+    end
+  end
+
+  def undo_favourite(status)
+    favourite = status.favourites.find_by(account: @account)
+
+    if favourite
       favourite.destroy!
     else
       delete_later!(object_uri)

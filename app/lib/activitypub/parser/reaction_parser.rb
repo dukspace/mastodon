@@ -4,6 +4,7 @@ class ActivityPub::Parser::ReactionParser
   include JsonLdHelper
 
   ParsedReaction = Data.define(:name, :custom_emoji)
+  RateLimitIdentity = Data.define(:id)
 
   def initialize(json, account)
     @json = json
@@ -32,7 +33,10 @@ class ActivityPub::Parser::ReactionParser
   end
 
   def custom_shortcode?(value)
-    value.start_with?(':') && value.end_with?(':') && value.length > 2 && CustomEmoji::SHORTCODE_ONLY_RE.match?(value[1...-1])
+    return false unless value.start_with?(':') && value.end_with?(':') && value.length > 2
+
+    shortcode = value[1...-1]
+    shortcode.length <= CustomEmoji::MAX_SHORTCODE_SIZE && CustomEmoji::SHORTCODE_ONLY_RE.match?(shortcode)
   end
 
   def find_or_create_custom_emoji(shortcode)
@@ -51,11 +55,27 @@ class ActivityPub::Parser::ReactionParser
     emoji ||= CustomEmoji.new(domain: @account.domain, shortcode: shortcode, uri: parser.uri)
     return emoji if emoji.persisted? && emoji.image_remote_url == parser.image_remote_url
 
+    unless remote_emoji_download_allowed?
+      return emoji if emoji.persisted?
+
+      return
+    end
+
     emoji.image_remote_url = parser.image_remote_url
     emoji.save
     emoji if emoji.persisted?
   rescue Seahorse::Client::NetworkingError => e
     Rails.logger.warn "Error storing reaction emoji: #{e}"
     emoji
+  end
+
+  def remote_emoji_download_allowed?
+    return @remote_emoji_download_allowed if instance_variable_defined?(:@remote_emoji_download_allowed)
+
+    identity = RateLimitIdentity.new("remote-reaction-emoji:#{@account.domain.presence || 'local'}")
+    RateLimiter.new(identity, family: :remote_reaction_emoji_downloads).record!
+    @remote_emoji_download_allowed = true
+  rescue Mastodon::RateLimitExceededError
+    @remote_emoji_download_allowed = false
   end
 end

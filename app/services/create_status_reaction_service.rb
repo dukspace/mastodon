@@ -40,7 +40,7 @@ class CreateStatusReactionService < BaseService
     return reaction if reaction.equal?(existing)
 
     ReactionDomainCapability.observe!(account.domain, selected_type) if activity_uri.present?
-    replace_remote_reaction(existing, reaction) if federate && status.account.remote?
+    federate_reaction_change(existing, reaction) if federate && account.local?
     notify_local_author(reaction) if notify && status.account.local? && status.account_id != account.id && favourite.nil?
     reaction
   end
@@ -67,26 +67,29 @@ class CreateStatusReactionService < BaseService
     emoji ? [value, emoji] : nil
   end
 
-  def delivery_type_for(status)
-    return :local if status.account.local?
-
-    ReactionDomainCapability.preferred_for(status.account.domain)
+  def delivery_type_for(_status)
+    # Public reactions fan out to heterogeneous follower domains, so use the
+    # broadly-supported Like representation for every new local activity.
+    :like
   end
 
-  def replace_remote_reaction(existing, reaction)
-    inbox_url = reaction.status.account.inbox_url
+  def federate_reaction_change(existing, reaction)
+    distribute(existing, ActivityPub::UndoStatusReactionSerializer) if existing
 
-    deliver(existing, ActivityPub::UndoStatusReactionSerializer, inbox_url) if existing
-
-    if reaction.activity_type_like?
+    if reaction.status.account.remote? && reaction.activity_type_like?
       favourite = Favourite.find_by(account: reaction.account, status: reaction.status)
-      deliver(favourite, ActivityPub::UndoLikeSerializer, inbox_url) if favourite
+      deliver_to_author(favourite, ActivityPub::UndoLikeSerializer) if favourite
     end
 
-    deliver(reaction, ActivityPub::StatusReactionSerializer, inbox_url)
+    distribute(reaction, ActivityPub::StatusReactionSerializer)
   end
 
-  def deliver(object, serializer, inbox_url)
+  def distribute(object, serializer)
+    DistributeStatusReactionService.new.call(object, serialize_payload(object, serializer).to_json)
+  end
+
+  def deliver_to_author(object, serializer)
+    inbox_url = object.status.account.inbox_url
     ActivityPub::DeliveryWorker.perform_async(serialize_payload(object, serializer).to_json, object.account_id, inbox_url)
   end
 
