@@ -2220,6 +2220,7 @@ en:
   themes:
     default: Mastodon
     golden_amber: Golden Amber
+    sky_blossom: Sky Blossom
     verdant_canopy: Verdant Canopy
   time:
     formats:

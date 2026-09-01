@@ -1,0 +1,123 @@
+// Sky Blossom builds on Mastodon's default theme and only replaces color
+// tokens. This keeps layout and component styling aligned with upstream.
+@use 'application';
+
+html {
+  // Cool neutrals move from pink-white and airy blue into deep evening navy.
+  --color-grey-50: #fff8fc;
+  --color-grey-100: #eef8ff;
+  --color-grey-200: #d9e8f4;
+  --color-grey-300: #b8cbdc;
+  --color-grey-400: #8ea7ba;
+  --color-grey-500: #6b849a;
+  --color-grey-600: #50677d;
+  --color-grey-700: #394c62;
+  --color-grey-800: #26374b;
+  --color-grey-900: #182637;
+  --color-grey-950: #0d1724;
+
+  // Clear-sky brand palette. Mastodon maps brand tokens to the indigo scale,
+  // so retaining those token names preserves upstream component behavior.
+  --color-indigo-50: #eefaff;
+  --color-indigo-100: #d7f2ff;
+  --color-indigo-200: #afe5ff;
+  --color-indigo-300: #7dd5ff;
+  --color-indigo-400: #43bfff;
+  --color-indigo-500: #149fe0;
+  --color-indigo-600: #087db6;
+  --color-indigo-700: #086391;
+  --color-indigo-800: #0c5276;
+  --color-indigo-900: #104461;
+  --color-indigo-950: #092b42;
+
+  // Blossom accents are deliberately separate from error, warning, and
+  // success palettes so semantic feedback keeps its established meaning.
+  --sky-blossom-pink-50: #fff0f7;
+  --sky-blossom-pink-100: #ffe1ef;
+  --sky-blossom-pink-200: #ffc2df;
+  --sky-blossom-pink-300: #ff91c4;
+  --sky-blossom-pink-400: #f65aa3;
+  --sky-blossom-pink-500: #dc337f;
+  --sky-blossom-pink-600: #b91f65;
+  --sky-blossom-pink-700: #94174f;
+  --sky-blossom-pink-800: #72143f;
+  --sky-blossom-pink-900: #5c1637;
+  --sky-blossom-pink-950: #36081f;
+}
+
+[data-color-scheme='dark'],
+html:not([data-color-scheme]) {
+  // Navy surfaces provide depth while sky-blue text and pink selected states
+  // remain clearly distinct from the surrounding timeline chrome.
+  --color-bg-secondary: color-mix(
+    in oklab,
+    var(--color-grey-900) 72%,
+    var(--color-grey-800)
+  );
+  --color-border-primary: var(--color-grey-600);
+  --color-bg-brand-soft: var(--sky-blossom-pink-900);
+  --color-bg-brand-softest: var(--sky-blossom-pink-950);
+  --color-border-brand-soft: var(--sky-blossom-pink-500);
+  --color-text-favourite-highlight: var(--sky-blossom-pink-300);
+  --sky-blossom-divider-subtle: var(--color-grey-800);
+  --rich-text-container-color: #42142e;
+  --rich-text-text-color: #ffc2df;
+  --rich-text-decorations-color: #dc337f;
+
+  &[data-contrast='high'],
+  [data-contrast='high'] & {
+    // Meaningful control boundaries exceed the quieter repeated-row divider.
+    --color-border-primary: var(--color-grey-400);
+    --color-border-brand-soft: var(--sky-blossom-pink-400);
+    --sky-blossom-divider-subtle: color-mix(
+      in oklab,
+      var(--color-grey-800) 74%,
+      var(--color-grey-700)
+    );
+  }
+}
+
+[data-color-scheme='light'] {
+  // Alternate pink-white and sky-white surfaces to make the two-color theme
+  // visible without tinting text or reducing content readability.
+  --color-bg-primary: var(--color-grey-50);
+  --color-bg-secondary: var(--color-grey-100);
+  --color-bg-tertiary: var(--color-grey-200);
+  --color-border-primary: var(--color-grey-500);
+  --color-bg-brand-soft: var(--sky-blossom-pink-100);
+  --color-bg-brand-softest: var(--sky-blossom-pink-50);
+  --color-border-brand-soft: var(--sky-blossom-pink-600);
+  --color-text-favourite-highlight: var(--sky-blossom-pink-600);
+  --sky-blossom-divider-subtle: var(--color-grey-200);
+  --rich-text-container-color: #ffe1ef;
+  --rich-text-text-color: #72143f;
+  --rich-text-decorations-color: #dc337f;
+
+  &[data-contrast='high'],
+  [data-contrast='high'] & {
+    --color-text-brand: var(--color-indigo-700);
+    --color-border-primary: var(--color-grey-600);
+    --color-border-brand-soft: var(--sky-blossom-pink-700);
+    --color-text-favourite-highlight: var(--sky-blossom-pink-700);
+    --sky-blossom-divider-subtle: color-mix(
+      in oklab,
+      var(--color-grey-200) 72%,
+      var(--color-grey-300)
+    );
+  }
+}
+
+// Keep the scrollbar visible but secondary on the alternating pastel surfaces.
+html.custom-scrollbars[data-color-scheme='light'] {
+  scrollbar-color: var(--color-grey-500) var(--color-bg-secondary);
+}
+
+// Reserve the accessible primary border for containers and controls while
+// repeated feed rows use a quieter, decorative divider in every mode.
+.status,
+.notification-group,
+.notification-ungrouped,
+.account:where(:not(.account--without-border)),
+.conversation {
+  border-bottom-color: var(--sky-blossom-divider-subtle);
+}
