@@ -3,18 +3,19 @@
 @use 'application';
 
 html {
-  // Cool neutrals move from pink-white and airy blue into deep evening navy.
-  --color-grey-50: #fff8fc;
-  --color-grey-100: #eef8ff;
-  --color-grey-200: #d9e8f4;
-  --color-grey-300: #b8cbdc;
-  --color-grey-400: #8ea7ba;
-  --color-grey-500: #6b849a;
-  --color-grey-600: #50677d;
-  --color-grey-700: #394c62;
-  --color-grey-800: #26374b;
-  --color-grey-900: #182637;
-  --color-grey-950: #0d1724;
+  // Cool neutrals carry the large surfaces from a clear-sky white into deep
+  // evening navy. Pink is reserved for accents rather than page backgrounds.
+  --color-grey-50: #f7fbff;
+  --color-grey-100: #edf6fc;
+  --color-grey-200: #d8e7f2;
+  --color-grey-300: #b7cad9;
+  --color-grey-400: #8da5b7;
+  --color-grey-500: #698196;
+  --color-grey-600: #50677c;
+  --color-grey-700: #3a4d62;
+  --color-grey-800: #27384b;
+  --color-grey-900: #192638;
+  --color-grey-950: #0f1825;
 
   // Clear-sky brand palette. Mastodon maps brand tokens to the indigo scale,
   // so retaining those token names preserves upstream component behavior.
@@ -47,27 +48,39 @@ html {
 
 [data-color-scheme='dark'],
 html:not([data-color-scheme]) {
-  // Navy surfaces provide depth while sky-blue text and pink selected states
-  // remain clearly distinct from the surrounding timeline chrome.
+  // Navy surfaces provide depth while sky-blue text carries interaction. Mix
+  // blossom pink into selected surfaces so large panels stay calm and dark.
   --color-bg-secondary: color-mix(
     in oklab,
     var(--color-grey-900) 72%,
     var(--color-grey-800)
   );
   --color-border-primary: var(--color-grey-600);
-  --color-bg-brand-soft: var(--sky-blossom-pink-900);
-  --color-bg-brand-softest: var(--sky-blossom-pink-950);
+  --color-bg-brand-soft: color-mix(
+    in oklab,
+    var(--color-grey-800) 72%,
+    var(--sky-blossom-pink-800)
+  );
+  --color-bg-brand-softest: color-mix(
+    in oklab,
+    var(--color-grey-900) 88%,
+    var(--sky-blossom-pink-900)
+  );
   --color-border-brand-soft: var(--sky-blossom-pink-500);
   --color-text-favourite-highlight: var(--sky-blossom-pink-300);
   --sky-blossom-divider-subtle: var(--color-grey-800);
-  --rich-text-container-color: #42142e;
+  --rich-text-container-color: color-mix(
+    in oklab,
+    var(--color-grey-800) 76%,
+    var(--sky-blossom-pink-800)
+  );
   --rich-text-text-color: #ffc2df;
   --rich-text-decorations-color: #dc337f;
 
   &[data-contrast='high'],
   [data-contrast='high'] & {
     // Meaningful control boundaries exceed the quieter repeated-row divider.
-    --color-border-primary: var(--color-grey-400);
+    --color-border-primary: var(--color-grey-500);
     --color-border-brand-soft: var(--sky-blossom-pink-400);
     --sky-blossom-divider-subtle: color-mix(
       in oklab,
@@ -78,14 +91,22 @@ html:not([data-color-scheme]) {
 }
 
 [data-color-scheme='light'] {
-  // Alternate pink-white and sky-white surfaces to make the two-color theme
-  // visible without tinting text or reducing content readability.
+  // Sky-white neutrals carry the page while blossom pink stays concentrated
+  // in selected states, favourite actions, and rich-text callouts.
   --color-bg-primary: var(--color-grey-50);
   --color-bg-secondary: var(--color-grey-100);
   --color-bg-tertiary: var(--color-grey-200);
   --color-border-primary: var(--color-grey-500);
-  --color-bg-brand-soft: var(--sky-blossom-pink-100);
-  --color-bg-brand-softest: var(--sky-blossom-pink-50);
+  --color-bg-brand-soft: color-mix(
+    in oklab,
+    var(--color-grey-100) 68%,
+    var(--sky-blossom-pink-100)
+  );
+  --color-bg-brand-softest: color-mix(
+    in oklab,
+    var(--color-grey-50) 84%,
+    var(--sky-blossom-pink-50)
+  );
   --color-border-brand-soft: var(--sky-blossom-pink-600);
   --color-text-favourite-highlight: var(--sky-blossom-pink-600);
   --sky-blossom-divider-subtle: var(--color-grey-200);

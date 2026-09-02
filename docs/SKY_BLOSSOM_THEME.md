@@ -2,7 +2,8 @@
 
 Sky Blossom is an optional color theme for Mastodon v4.7.0. It keeps the
 default Mastodon layout, typography, and component styles while combining
-sky-blue interaction colors with pink-white surfaces and blossom-pink accents.
+sky-blue interaction colors with cool sky-tinted surfaces and blossom-pink
+accents.
 
 ## How the theme is loaded
 
@@ -21,11 +22,14 @@ overrides only CSS custom properties. Error, warning, and success palettes stay
 unchanged so semantic feedback remains distinct from the pink decorative and
 selection accents.
 
-The light scheme alternates pink-white primary surfaces with sky-white
-secondary surfaces. The dark scheme uses evening navy surfaces, sky-blue links
-and controls, and deep-pink selected surfaces. Repeated feed rows retain quiet
-decorative dividers while meaningful container and control borders meet the
-non-text contrast target. High contrast strengthens those boundaries further.
+The light scheme uses sky-white neutrals for large surfaces. The dark scheme
+uses evening navy surfaces, while both schemes reserve blossom pink for
+selected states, favourite actions, and rich-text callouts. Large selected
+panels mix a small amount of pink into their surrounding neutral instead of
+becoming solid pink or burgundy. Repeated feed rows retain quiet decorative
+dividers while meaningful container and control borders meet the non-text
+contrast target. High contrast strengthens those boundaries without making the
+interface feel outlined.
 
 Color scheme and contrast are separate preferences. Their resolved values are
 exposed through the `data-color-scheme` and `data-contrast` HTML attributes, so
@@ -73,13 +77,13 @@ The final rendered token combinations have these WCAG contrast ratios:
 
 | Combination                                 |   Light | Light high |    Dark | Dark high |
 | ------------------------------------------- | ------: | ---------: | ------: | --------: |
-| Primary text / primary surface              | 17.24:1 |    20.08:1 | 16.74:1 |   17.24:1 |
-| Secondary text / primary surface            |  5.61:1 |    11.61:1 | 10.83:1 |   10.83:1 |
-| Brand text / primary surface                |  6.27:1 |     6.27:1 | 11.01:1 |   11.01:1 |
+| Primary text / primary surface              | 17.15:1 |    20.20:1 | 16.29:1 |   17.15:1 |
+| Secondary text / primary surface            |  5.65:1 |    11.52:1 | 10.58:1 |   10.58:1 |
+| Brand text / primary surface                |  6.30:1 |     6.30:1 | 10.90:1 |   10.90:1 |
 | White text / primary brand button           |  6.55:1 |     6.55:1 |  6.55:1 |    6.55:1 |
-| Favourite icon / primary surface            |  5.83:1 |     8.05:1 |  8.67:1 |    8.67:1 |
-| Meaningful primary border / primary surface |  3.72:1 |     5.61:1 |  3.07:1 |    7.20:1 |
-| Rich text / rich-text surface               |  9.15:1 |     9.15:1 | 10.24:1 |   10.24:1 |
+| Favourite icon / primary surface            |  5.86:1 |     8.10:1 |  8.58:1 |    8.58:1 |
+| Meaningful primary border / primary surface |  3.90:1 |     5.65:1 |  3.03:1 |    4.40:1 |
+| Rich text / rich-text surface               |  9.15:1 |     9.15:1 |  7.86:1 |    7.86:1 |
 
 Normal text and links exceed WCAG AA's 4.5:1 target, and meaningful control
 boundaries exceed the 3:1 non-text target in every explicit mode. Screenshot
