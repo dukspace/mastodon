@@ -71,15 +71,15 @@ Check these surfaces at desktop and mobile widths:
 
 The final rendered token combinations have these WCAG contrast ratios:
 
-| Combination | Light | Light high | Dark | Dark high |
-| --- | ---: | ---: | ---: | ---: |
-| Primary text / primary surface | 17.24:1 | 20.08:1 | 16.74:1 | 17.24:1 |
-| Secondary text / primary surface | 5.61:1 | 11.61:1 | 10.83:1 | 10.83:1 |
-| Brand text / primary surface | 6.27:1 | 6.27:1 | 11.01:1 | 11.01:1 |
-| White text / primary brand button | 6.55:1 | 6.55:1 | 6.55:1 | 6.55:1 |
-| Favourite icon / primary surface | 5.83:1 | 8.05:1 | 8.67:1 | 8.67:1 |
-| Meaningful primary border / primary surface | 3.72:1 | 5.61:1 | 3.07:1 | 7.20:1 |
-| Rich text / rich-text surface | 9.15:1 | 9.15:1 | 10.24:1 | 10.24:1 |
+| Combination                                 |   Light | Light high |    Dark | Dark high |
+| ------------------------------------------- | ------: | ---------: | ------: | --------: |
+| Primary text / primary surface              | 17.24:1 |    20.08:1 | 16.74:1 |   17.24:1 |
+| Secondary text / primary surface            |  5.61:1 |    11.61:1 | 10.83:1 |   10.83:1 |
+| Brand text / primary surface                |  6.27:1 |     6.27:1 | 11.01:1 |   11.01:1 |
+| White text / primary brand button           |  6.55:1 |     6.55:1 |  6.55:1 |    6.55:1 |
+| Favourite icon / primary surface            |  5.83:1 |     8.05:1 |  8.67:1 |    8.67:1 |
+| Meaningful primary border / primary surface |  3.72:1 |     5.61:1 |  3.07:1 |    7.20:1 |
+| Rich text / rich-text surface               |  9.15:1 |     9.15:1 | 10.24:1 |   10.24:1 |
 
 Normal text and links exceed WCAG AA's 4.5:1 target, and meaningful control
 boundaries exceed the 3:1 non-text target in every explicit mode. Screenshot
