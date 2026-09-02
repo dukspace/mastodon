@@ -3,8 +3,9 @@
 @use 'application';
 
 html {
-  // Cool neutrals carry the large surfaces from a clear-sky white into deep
-  // evening navy. Pink is reserved for accents rather than page backgrounds.
+  // Cool neutrals carry readable text and controls from clear-sky white into
+  // deep evening navy. The three large-surface roles are assigned per scheme
+  // below so white, sky, and blossom pink all remain visible.
   --color-grey-50: #f7fbff;
   --color-grey-100: #edf6fc;
   --color-grey-200: #d8e7f2;
@@ -48,39 +49,28 @@ html {
 
 [data-color-scheme='dark'],
 html:not([data-color-scheme]) {
-  // Navy surfaces provide depth while sky-blue text carries interaction. Mix
-  // blossom pink into selected surfaces so large panels stay calm and dark.
-  --color-bg-secondary: color-mix(
-    in oklab,
-    var(--color-grey-900) 72%,
-    var(--color-grey-800)
-  );
-  --color-border-primary: var(--color-grey-600);
-  --color-bg-brand-soft: color-mix(
-    in oklab,
-    var(--color-grey-800) 72%,
-    var(--sky-blossom-pink-800)
-  );
-  --color-bg-brand-softest: color-mix(
-    in oklab,
-    var(--color-grey-900) 88%,
-    var(--sky-blossom-pink-900)
-  );
+  // Dark mode keeps the same 1:2:2 visual rhythm with a neutral card surface,
+  // a deep sky canvas, and a plum-pink feature surface.
+  --sky-blossom-surface-white: #202b39;
+  --sky-blossom-surface-sky: #123349;
+  --sky-blossom-surface-pink: #3d1d33;
+  --color-bg-primary: var(--sky-blossom-surface-white);
+  --color-bg-secondary: var(--sky-blossom-surface-sky);
+  --color-bg-tertiary: var(--sky-blossom-surface-pink);
+  --color-border-primary: var(--color-grey-500);
+  --color-bg-brand-soft: #552443;
+  --color-bg-brand-softest: #462039;
   --color-border-brand-soft: var(--sky-blossom-pink-500);
   --color-text-favourite-highlight: var(--sky-blossom-pink-300);
-  --sky-blossom-divider-subtle: var(--color-grey-800);
-  --rich-text-container-color: color-mix(
-    in oklab,
-    var(--color-grey-800) 76%,
-    var(--sky-blossom-pink-800)
-  );
+  --sky-blossom-divider-subtle: #6f3a5a;
+  --rich-text-container-color: #552443;
   --rich-text-text-color: #ffc2df;
   --rich-text-decorations-color: #dc337f;
 
   &[data-contrast='high'],
   [data-contrast='high'] & {
     // Meaningful control boundaries exceed the quieter repeated-row divider.
-    --color-border-primary: var(--color-grey-500);
+    --color-border-primary: var(--color-grey-400);
     --color-border-brand-soft: var(--sky-blossom-pink-400);
     --sky-blossom-divider-subtle: color-mix(
       in oklab,
@@ -91,22 +81,18 @@ html:not([data-color-scheme]) {
 }
 
 [data-color-scheme='light'] {
-  // Sky-white neutrals carry the page while blossom pink stays concentrated
-  // in selected states, favourite actions, and rich-text callouts.
-  --color-bg-primary: var(--color-grey-50);
-  --color-bg-secondary: var(--color-grey-100);
-  --color-bg-tertiary: var(--color-grey-200);
+  // White cards sit on equally prominent sky and blossom-pink large surfaces.
+  // This targets an approximate 1:2:2 white/sky/pink area ratio rather than
+  // limiting pink to small action accents.
+  --sky-blossom-surface-white: #fff;
+  --sky-blossom-surface-sky: #d7f2ff;
+  --sky-blossom-surface-pink: #ffd7e9;
+  --color-bg-primary: var(--sky-blossom-surface-white);
+  --color-bg-secondary: var(--sky-blossom-surface-sky);
+  --color-bg-tertiary: var(--sky-blossom-surface-pink);
   --color-border-primary: var(--color-grey-500);
-  --color-bg-brand-soft: color-mix(
-    in oklab,
-    var(--color-grey-100) 68%,
-    var(--sky-blossom-pink-100)
-  );
-  --color-bg-brand-softest: color-mix(
-    in oklab,
-    var(--color-grey-50) 84%,
-    var(--sky-blossom-pink-50)
-  );
+  --color-bg-brand-soft: var(--sky-blossom-pink-200);
+  --color-bg-brand-softest: var(--sky-blossom-pink-100);
   --color-border-brand-soft: var(--sky-blossom-pink-600);
   --color-text-favourite-highlight: var(--sky-blossom-pink-600);
   --sky-blossom-divider-subtle: var(--color-grey-200);
@@ -126,6 +112,33 @@ html:not([data-color-scheme]) {
       var(--color-grey-300)
     );
   }
+}
+
+// Large surfaces make the requested palette ratio visible without changing
+// Mastodon's layout: sky is the canvas, pink frames the working area, and
+// white (or its dark neutral equivalent) carries dense reading content.
+body.app-body,
+body.admin {
+  background: var(--sky-blossom-surface-sky);
+}
+
+.columns-area__panels__main,
+.admin-wrapper .content-wrapper {
+  background-color: var(--sky-blossom-surface-pink);
+}
+
+.status,
+.notification-group,
+.notification-ungrouped,
+.account:where(:not(.account--without-border)),
+.conversation,
+.compose-form__highlightable {
+  background-color: var(--sky-blossom-surface-white);
+}
+
+.tabs-bar__wrapper,
+.ui__navigation-bar {
+  background: var(--sky-blossom-surface-sky);
 }
 
 // Keep the scrollbar visible but secondary on the alternating pastel surfaces.

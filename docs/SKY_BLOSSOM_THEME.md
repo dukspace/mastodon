@@ -1,9 +1,8 @@
 # Sky Blossom theme
 
-Sky Blossom is an optional color theme for Mastodon v4.7.0. It keeps the
+Sky Blossom is an optional color theme for Mastodon v4.7.1. It keeps the
 default Mastodon layout, typography, and component styles while combining
-sky-blue interaction colors with cool sky-tinted surfaces and blossom-pink
-accents.
+white reading cards with equally prominent sky-blue and blossom-pink surfaces.
 
 ## How the theme is loaded
 
@@ -22,14 +21,14 @@ overrides only CSS custom properties. Error, warning, and success palettes stay
 unchanged so semantic feedback remains distinct from the pink decorative and
 selection accents.
 
-The light scheme uses sky-white neutrals for large surfaces. The dark scheme
-uses evening navy surfaces, while both schemes reserve blossom pink for
-selected states, favourite actions, and rich-text callouts. Large selected
-panels mix a small amount of pink into their surrounding neutral instead of
-becoming solid pink or burgundy. Repeated feed rows retain quiet decorative
-dividers while meaningful container and control borders meet the non-text
-contrast target. High contrast strengthens those boundaries without making the
-interface feel outlined.
+The surface system targets an approximate 1:2:2 white/sky/pink visual ratio.
+In light mode, sky forms the page canvas, pink frames the main working area,
+and white carries dense reading content. Dark mode preserves that rhythm with
+a deep sky canvas, a plum-pink working area, and neutral cards with white text.
+Pink also remains the favourite, selection, and rich-text accent. Repeated feed
+rows retain quiet decorative dividers while meaningful container and control
+borders meet the non-text contrast target. High contrast strengthens those
+boundaries without making the interface feel outlined.
 
 Color scheme and contrast are separate preferences. Their resolved values are
 exposed through the `data-color-scheme` and `data-contrast` HTML attributes, so
@@ -73,17 +72,17 @@ Check these surfaces at desktop and mobile widths:
 - Signed-out and authentication pages
 - Errors, warnings, success messages, focus rings, and disabled controls
 
-The final rendered token combinations have these WCAG contrast ratios:
+The minimum rendered contrast across the white, sky, and pink surface roles is:
 
-| Combination                                 |   Light | Light high |    Dark | Dark high |
-| ------------------------------------------- | ------: | ---------: | ------: | --------: |
-| Primary text / primary surface              | 17.15:1 |    20.20:1 | 16.29:1 |   17.15:1 |
-| Secondary text / primary surface            |  5.65:1 |    11.52:1 | 10.58:1 |   10.58:1 |
-| Brand text / primary surface                |  6.30:1 |     6.30:1 | 10.90:1 |   10.90:1 |
-| White text / primary brand button           |  6.55:1 |     6.55:1 |  6.55:1 |    6.55:1 |
-| Favourite icon / primary surface            |  5.86:1 |     8.10:1 |  8.58:1 |    8.58:1 |
-| Meaningful primary border / primary surface |  3.90:1 |     5.65:1 |  3.03:1 |    4.40:1 |
-| Rich text / rich-text surface               |  9.15:1 |     9.15:1 |  7.86:1 |    7.86:1 |
+| Combination                        |   Light | Light high |    Dark | Dark high |
+| ---------------------------------- | ------: | ---------: | ------: | --------: |
+| Primary text / large surfaces      | 13.71:1 |    16.15:1 | 12.03:1 |   12.66:1 |
+| Secondary text / large surfaces    |  4.52:1 |     9.21:1 |  7.81:1 |    7.81:1 |
+| Brand text / large surfaces        |  5.04:1 |     5.04:1 |  8.04:1 |    8.04:1 |
+| White text / primary brand button  |  6.55:1 |     6.55:1 |  6.55:1 |    6.55:1 |
+| Favourite icon / large surfaces    |  4.69:1 |     6.47:1 |  6.33:1 |    6.33:1 |
+| Meaningful border / large surfaces |  3.12:1 |     4.52:1 |  3.25:1 |    5.14:1 |
+| Rich text / rich-text surface      |  9.15:1 |     9.15:1 |  8.16:1 |    8.16:1 |
 
 Normal text and links exceed WCAG AA's 4.5:1 target, and meaningful control
 boundaries exceed the 3:1 non-text target in every explicit mode. Screenshot
@@ -98,15 +97,13 @@ runtime state, so those still require an interactive full-application pass.
 
 ![Sky Blossom dark desktop](images/sky-blossom/dark-desktop.jpg)
 
-![Sky Blossom light status actions](images/sky-blossom/status-light.jpg)
+![Sky Blossom light reading cards and actions](images/sky-blossom/status-light.jpg)
 
-### High contrast and mobile states
+### High-contrast states
 
-![Sky Blossom dark high-contrast status](images/sky-blossom/status-dark-high-contrast.jpg)
+![Sky Blossom dark high-contrast signed-out home](images/sky-blossom/status-dark-high-contrast.jpg)
 
-![Sky Blossom light high-contrast form](images/sky-blossom/form-light-high-contrast.jpg)
-
-![Sky Blossom mobile status](images/sky-blossom/status-mobile-light.jpg)
+![Sky Blossom light high-contrast home](images/sky-blossom/form-light-high-contrast.jpg)
 
 ## Production deployment
 
