@@ -149,16 +149,27 @@ RSpec.describe MediaAttachment, :attachment_processing do
     it_behaves_like 'static 600x400 image', 'image/webp', '.webp'
   end
 
+  shared_examples 'blocked HEIF image' do
+    it 'rejects processing without saving the media attachment' do
+      expect { media }
+        .to raise_error(Paperclip::Error, /VipsForeignLoad/)
+        .and not_change(described_class, :count)
+    end
+  end
+
+  # v4.7.2 temporarily blocks VipsForeignLoadHeif for security, affecting AVIF and HEIC.
+  # When upstream safely restores HEIF support, restore the 'static 600x400 image'
+  # examples below (image/jpeg, .jpeg) and remove the 'blocked HEIF image' examples.
   describe 'avif' do
     let(:media) { Fabricate(:media_attachment, file: attachment_fixture('600x400.avif')) }
 
-    it_behaves_like 'static 600x400 image', 'image/jpeg', '.jpeg'
+    it_behaves_like 'blocked HEIF image'
   end
 
   describe 'heic' do
     let(:media) { Fabricate(:media_attachment, file: attachment_fixture('600x400.heic')) }
 
-    it_behaves_like 'static 600x400 image', 'image/jpeg', '.jpeg'
+    it_behaves_like 'blocked HEIF image'
   end
 
   describe 'base64-encoded image' do
