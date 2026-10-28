@@ -142,6 +142,37 @@ RSpec.describe '/api/v1/statuses' do
 
       it_behaves_like 'forbidden for wrong scope', 'read read:statuses'
 
+      context 'with a 5,000-character status' do
+        let(:params) { { status: '가' * 5000 } }
+
+        it 'creates the post without truncating it' do
+          expect { subject }.to change(user.account.statuses, :count).by(1)
+
+          expect(response).to have_http_status(200)
+          expect(user.account.statuses.last.text).to eq(params[:status])
+        end
+      end
+
+      context 'with a 5,001-character status' do
+        let(:params) { { status: '가' * 5001 } }
+
+        it 'rejects the post without saving it' do
+          expect { subject }.to_not change(user.account.statuses, :count)
+
+          expect(response).to have_http_status(422)
+        end
+      end
+
+      context 'when a content warning pushes the total over 5,000 characters' do
+        let(:params) { { status: '가' * 5000, spoiler_text: '나' } }
+
+        it 'rejects the combined length' do
+          expect { subject }.to_not change(user.account.statuses, :count)
+
+          expect(response).to have_http_status(422)
+        end
+      end
+
       context 'with a basic status body' do
         it 'returns rate limit headers', :aggregate_failures do
           subject

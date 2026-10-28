@@ -1,22 +1,22 @@
-name: Build and deploy production to staging
+name: Build images and deploy staging
 
 on:
   push:
     branches:
-      - production
+      - staging
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: production-container-and-staging
+  group: staging-container-and-deploy
   cancel-in-progress: false
 
 jobs:
   verify:
     name: Verify staging candidate
-    if: github.ref == 'refs/heads/production'
+    if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
@@ -53,6 +53,9 @@ jobs:
       - name: Check out candidate
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
+      - name: Check staging deployment safeguards without a server
+        run: python3 deploy/staging/test_deploy.py
+
       - name: Set up Ruby
         uses: ./.github/actions/setup-ruby
         with:
@@ -64,9 +67,12 @@ jobs:
       - name: Prepare test database
         run: bin/rails db:setup
 
-      - name: Run production feature specs
+      - name: Run custom feature specs
         run: |
           bundle exec rspec \
+            spec/validators/status_length_validator_spec.rb \
+            spec/requests/api/v1/statuses_spec.rb \
+            spec/requests/api/v2/instance_spec.rb \
             spec/requests/api/v1/statuses/reactions_spec.rb \
             spec/models/status_reaction_spec.rb \
             spec/models/reaction_domain_capability_spec.rb \
@@ -82,14 +88,16 @@ jobs:
         run: bin/rubocop --format github
 
       - name: Run JavaScript tests
-        run: yarn test:js run
+        run: |
+          yarn test:js run
+          node --test streaming/database.test.mjs
 
       - name: Run JavaScript lint and typecheck
         run: |
           yarn workspaces foreach --all --parallel run lint:js --max-warnings 0
           yarn typecheck
 
-      - name: Lint production themes
+      - name: Lint custom themes
         run: >-
           yarn stylelint
           app/javascript/styles/golden_amber.scss
@@ -102,6 +110,17 @@ jobs:
           touch .env.production
           docker compose config --quiet
 
+      - name: Validate production deployment configuration
+        env:
+          MASTODON_IMAGE_TAG: sha-0000000000000000000000000000000000000000
+          PRODUCTION_ENV_FILE: /tmp/mastodon-runtime.env
+          RDS_CA_FILE: /tmp/mastodon-rds-ca.pem
+        run: |
+          touch "$PRODUCTION_ENV_FILE" "$RDS_CA_FILE"
+          docker compose -f deploy/production/compose.yml config --quiet
+          bash -n deploy/production/prepare-assets.sh
+          ruby -c deploy/production/prepare_env.rb
+
   build-image:
     needs: verify
     permissions:
@@ -113,14 +132,14 @@ jobs:
       cache: true
       push_to_images: |
         ghcr.io/dukspace/mastodon
-      version_metadata: production
+      version_metadata: dukspace
       flavor: |
         latest=false
       tags: |
-        type=raw,value=production
+        type=raw,value=staging
         type=raw,value=sha-${{ github.sha }}
       labels: |
-        org.opencontainers.image.description=Mastodon production image for dukspace
+        org.opencontainers.image.description=Mastodon release candidate for dukspace
         org.opencontainers.image.source=https://github.com/dukspace/mastodon
         org.opencontainers.image.revision=${{ github.sha }}
     secrets: inherit
@@ -136,14 +155,14 @@ jobs:
       cache: true
       push_to_images: |
         ghcr.io/dukspace/mastodon-streaming
-      version_metadata: production
+      version_metadata: dukspace
       flavor: |
         latest=false
       tags: |
-        type=raw,value=production
+        type=raw,value=staging
         type=raw,value=sha-${{ github.sha }}
       labels: |
-        org.opencontainers.image.description=Mastodon streaming production image for dukspace
+        org.opencontainers.image.description=Mastodon streaming release candidate for dukspace
         org.opencontainers.image.source=https://github.com/dukspace/mastodon
         org.opencontainers.image.revision=${{ github.sha }}
     secrets: inherit
@@ -187,7 +206,7 @@ jobs:
         run: |
           : "${STAGING_DEPLOY_PATH:?Set STAGING_DEPLOY_PATH in the staging environment}"
 
-      - name: Deploy exact production commit
+      - name: Deploy exact staging commit
         id: deploy
         run: deploy/staging/deploy.sh "$STAGING_DEPLOY_PATH" "$DEPLOY_SHA"
 
