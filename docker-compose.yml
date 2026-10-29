@@ -1,6 +1,6 @@
-# This file is designed for production server deployment, not local development work
+# Synology Staging stack. For duk.space Production, use deploy/production/compose.yml.
 # For a containerized local dev environment, see: https://github.com/mastodon/mastodon/blob/main/docs/DEVELOPMENT.md#docker
-# Application services use the production GHCR tag by default. Set MASTODON_IMAGE_TAG
+# Application services use the staging GHCR tag by default. Set MASTODON_IMAGE_TAG
 # in the invoking shell to deploy a specific sha-<full-commit-sha> image set.
 
 services:
@@ -59,7 +59,7 @@ services:
   #     - '127.0.0.1:9200:9200'
 
   web:
-    image: ghcr.io/dukspace/mastodon:${MASTODON_IMAGE_TAG:-production}
+    image: ghcr.io/dukspace/mastodon:${MASTODON_IMAGE_TAG:-staging}
     restart: always
     env_file: .env.production
     command: bundle exec puma -C config/puma.rb
@@ -79,7 +79,7 @@ services:
       - ./public/system:/mastodon/public/system
 
   streaming:
-    image: ghcr.io/dukspace/mastodon-streaming:${MASTODON_IMAGE_TAG:-production}
+    image: ghcr.io/dukspace/mastodon-streaming:${MASTODON_IMAGE_TAG:-staging}
     restart: always
     env_file: .env.production
     command: node ./streaming/index.js
@@ -96,7 +96,7 @@ services:
       - redis
 
   sidekiq:
-    image: ghcr.io/dukspace/mastodon:${MASTODON_IMAGE_TAG:-production}
+    image: ghcr.io/dukspace/mastodon:${MASTODON_IMAGE_TAG:-staging}
     restart: always
     env_file: .env.production
     command: bundle exec sidekiq

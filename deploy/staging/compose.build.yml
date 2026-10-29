@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        MASTODON_VERSION_METADATA: dks
+        MASTODON_VERSION_METADATA: dukspace
         SOURCE_COMMIT: '${MASTODON_SOURCE_COMMIT:?MASTODON_SOURCE_COMMIT is required}'
 
   streaming:
@@ -14,7 +14,7 @@ services:
       context: .
       dockerfile: streaming/Dockerfile
       args:
-        MASTODON_VERSION_METADATA: dks
+        MASTODON_VERSION_METADATA: dukspace
 
   sidekiq:
     image: 'mastodon-staging:${MASTODON_IMAGE_TAG:?MASTODON_IMAGE_TAG is required}'

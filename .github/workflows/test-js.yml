@@ -10,6 +10,7 @@ on:
       - 'yarn.lock'
       - '.nvmrc'
       - '**/*.js'
+      - '**/*.mjs'
       - '**/*.jsx'
       - '**/*.ts'
       - '**/*.tsx'
@@ -22,6 +23,7 @@ on:
       - 'yarn.lock'
       - '.nvmrc'
       - '**/*.js'
+      - '**/*.mjs'
       - '**/*.jsx'
       - '**/*.ts'
       - '**/*.tsx'
@@ -42,3 +44,6 @@ jobs:
 
       - name: JavaScript testing
         run: yarn test:js
+
+      - name: Streaming database configuration tests
+        run: node --test streaming/database.test.mjs

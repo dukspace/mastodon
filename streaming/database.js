@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import pg from 'pg';
 import pgConnectionString from 'pg-connection-string';
 
@@ -98,6 +100,16 @@ export function configFromEnv(env, environment) {
     }
   } else {
     throw new Error('Unable to resolve postgresql database configuration.');
+  }
+
+  // Share libpq's CA file setting with the Rails processes. Explicit URL CA
+  // settings take precedence; disabled TLS and no-verify keep their semantics.
+  if (env.PGSSLROOTCERT && baseConfig.ssl &&
+      (baseConfig.ssl === true || (!baseConfig.ssl.ca && baseConfig.ssl.rejectUnauthorized !== false))) {
+    baseConfig.ssl = {
+      ...(baseConfig.ssl === true ? {} : baseConfig.ssl),
+      ca: readFileSync(env.PGSSLROOTCERT, 'utf8'),
+    };
   }
 
   return {
