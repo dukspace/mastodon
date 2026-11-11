@@ -71,6 +71,9 @@ show_diagnostics() {
 trap show_diagnostics ERR
 
 "${compose[@]}" config --quiet
+echo "Previous streaming Node.js version:"
+"${compose[@]}" exec -T streaming node --version || true
+
 "${compose[@]}" pull web streaming sidekiq
 "${compose[@]}" run --rm web bundle exec rails db:prepare
 "${compose[@]}" up -d --remove-orphans
@@ -93,6 +96,14 @@ done
 
 if [[ "$healthy" != true ]]; then
   echo 'Staging health checks timed out.' >&2
+  false
+fi
+
+expected_node_version="v$(tr -d '[:space:]' < .nvmrc)"
+container_node_version="$("${compose[@]}" exec -T streaming node --version)"
+echo "Streaming Node.js version: $container_node_version (expected $expected_node_version)"
+if [[ "$container_node_version" != "$expected_node_version" ]]; then
+  echo 'Streaming Node.js version does not match .nvmrc.' >&2
   false
 fi
 

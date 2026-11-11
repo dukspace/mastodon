@@ -14,13 +14,13 @@ ARG BASE_REGISTRY="docker.io"
 # Ruby image to use for base image, change with [--build-arg RUBY_VERSION="4.0.x"]
 # renovate: datasource=docker depName=docker.io/ruby
 ARG RUBY_VERSION="4.0.6"
-# # Node.js version to use in base image, change with [--build-arg NODE_MAJOR_VERSION="22"]
+# # Node.js version to use in base image, change with [--build-arg NODE_MAJOR_VERSION="24.22.3"]
 # renovate: datasource=node-version depName=node
-ARG NODE_MAJOR_VERSION="24"
+ARG NODE_MAJOR_VERSION="24.22.3"
 # Debian image to use for base image, change with [--build-arg DEBIAN_VERSION="trixie"]
 ARG DEBIAN_VERSION="trixie"
-# Node.js image to use for base image based on combined variables (ex: 20-trixie-slim)
-FROM ${BASE_REGISTRY}/node:${NODE_MAJOR_VERSION}-${DEBIAN_VERSION}-slim AS node
+# Node.js image to use for base image based on combined variables (ex: 24.22.3-trixie)
+FROM ${BASE_REGISTRY}/node:${NODE_MAJOR_VERSION}-${DEBIAN_VERSION} AS node
 # Ruby image to use for base image based on combined variables (ex: 3.4.x-slim-trixie)
 FROM ${BASE_REGISTRY}/ruby:${RUBY_VERSION}-slim-${DEBIAN_VERSION} AS ruby
 
