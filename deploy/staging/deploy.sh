@@ -38,16 +38,17 @@ if test -n "$(git status --porcelain --untracked-files=no)"; then
   exit 1
 fi
 
-git fetch --prune origin production
+# An explicit refspec also works on NAS checkouts that only fetched production.
+git fetch origin refs/heads/staging:refs/remotes/origin/staging
 
-remote_sha="$(git rev-parse origin/production)"
+remote_sha="$(git rev-parse origin/staging)"
 if [[ "$remote_sha" != "$deploy_sha" ]]; then
-  echo "Skipping superseded deployment $deploy_sha; origin/production is $remote_sha."
+  echo "Skipping superseded deployment $deploy_sha; origin/staging is $remote_sha."
   exit 0
 fi
 
 previous_sha="$(git rev-parse HEAD)"
-git switch production
+git switch staging
 git merge --ff-only "$deploy_sha"
 
 if [[ "$(git rev-parse HEAD)" != "$deploy_sha" ]]; then

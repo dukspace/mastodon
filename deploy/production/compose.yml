@@ -1,0 +1,89 @@
+name: mastodon-production
+
+x-app: &app
+  image: ghcr.io/dukspace/mastodon:${MASTODON_IMAGE_TAG:?Set a verified sha-<full-commit-sha> tag}
+  restart: unless-stopped
+  env_file:
+    - path: ${PRODUCTION_ENV_FILE:?Set the absolute runtime env file path}
+      format: raw
+  volumes:
+    - type: bind
+      source: ${RDS_CA_FILE:?Set the absolute RDS CA bundle path}
+      target: /etc/mastodon/rds-ca.pem
+      read_only: true
+      bind:
+        create_host_path: false
+  logging:
+    driver: json-file
+    options:
+      max-size: '10m'
+      max-file: '3'
+
+x-environment: &environment
+  RAILS_ENV: production
+  NODE_ENV: production
+  DB_SSLMODE: verify-full
+  PGSSLROOTCERT: /etc/mastodon/rds-ca.pem
+
+services:
+  web:
+    <<: *app
+    environment:
+      <<: *environment
+      BIND: 0.0.0.0
+      PORT: '3000'
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      MAX_THREADS: ${MAX_THREADS:-5}
+      RAILS_SERVE_STATIC_FILES: 'true'
+    command: bundle exec puma -C config/puma.rb
+    ports:
+      - '127.0.0.1:3000:3000'
+    stop_grace_period: 60s
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:3000/health']
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  streaming:
+    <<: *app
+    image: ghcr.io/dukspace/mastodon-streaming:${MASTODON_IMAGE_TAG:?Set a verified sha-<full-commit-sha> tag}
+    environment:
+      <<: *environment
+      BIND: 0.0.0.0
+      PORT: '4000'
+    command: node ./streaming/index.js
+    ports:
+      - '127.0.0.1:4000:4000'
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        ['CMD', 'curl', '-fsS', 'http://127.0.0.1:4000/api/v1/streaming/health']
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  sidekiq:
+    <<: *app
+    environment:
+      <<: *environment
+      SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-25}
+      DB_POOL: ${SIDEKIQ_CONCURRENCY:-25}
+      MASTODON_SIDEKIQ_READY_FILENAME: sidekiq_process_has_started_and_will_begin_processing_jobs
+    command:
+      - sh
+      - -c
+      - rm -f tmp/sidekiq_process_has_started_and_will_begin_processing_jobs && exec bundle exec sidekiq -t 60
+    stop_grace_period: 90s
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "test -f tmp/sidekiq_process_has_started_and_will_begin_processing_jobs && ps aux | grep -q '[s]idekiq'",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
