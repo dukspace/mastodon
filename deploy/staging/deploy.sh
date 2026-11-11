@@ -48,7 +48,11 @@ if [[ "$remote_sha" != "$deploy_sha" ]]; then
 fi
 
 previous_sha="$(git rev-parse HEAD)"
-git switch staging
+if git show-ref --verify --quiet refs/heads/staging; then
+  git switch staging
+else
+  git switch --no-track -c staging origin/staging
+fi
 git merge --ff-only "$deploy_sha"
 
 if [[ "$(git rev-parse HEAD)" != "$deploy_sha" ]]; then

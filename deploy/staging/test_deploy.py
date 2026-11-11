@@ -38,6 +38,7 @@ class DeploymentTest(unittest.TestCase):
         self.git(self.root, "init", "--bare", str(self.remote))
         self.git(self.root, "init", "-b", "production", str(self.seed))
         self.identity(self.seed)
+        (self.seed / ".nvmrc").write_text("24.22.3\n")
         (self.seed / "docker-compose.yml").write_text("services: {}\n")
         (self.seed / ".gitignore").write_text(".env.production\n")
         self.previous = self.commit(self.seed)
@@ -60,6 +61,8 @@ class DeploymentTest(unittest.TestCase):
 import json, os, sys
 with open(os.environ["TEST_DOCKER_LOG"], "a") as log:
     log.write(json.dumps([os.environ.get("MASTODON_IMAGE_TAG"), sys.argv[1:]]) + "\\n")
+if sys.argv[-2:] == ["node", "--version"]:
+    print(os.environ.get("TEST_NODE_VERSION", "v24.22.3"))
 if sys.argv[-1] == 'printf %s "$SOURCE_COMMIT"':
     print(os.environ["TEST_DEPLOY_SHA"], end="")
 ''')
@@ -88,6 +91,20 @@ if sys.argv[-1] == 'printf %s "$SOURCE_COMMIT"':
         self.assertTrue(calls)
         self.assertTrue(all(tag == "sha-" + self.candidate for tag, _ in calls))
         self.assertIn("deployed=true", self.output.read_text())
+
+    def test_missing_staging_branch_is_created(self):
+        self.git(self.checkout, "branch", "-D", "staging")
+        result = self.deploy(self.candidate)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertEqual(self.git(self.checkout, "branch", "--show-current"), "staging")
+        self.assertEqual(self.git(self.checkout, "rev-parse", "production"), self.previous)
+
+    def test_wrong_node_version_does_not_report_success(self):
+        self.env["TEST_NODE_VERSION"] = "v24.19.0"
+        result = self.deploy(self.candidate)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("does not match .nvmrc", result.stderr)
+        self.assertNotIn("deployed=true", self.output.read_text())
 
     def test_superseded_commit_never_calls_docker(self):
         result = self.deploy(self.previous)
